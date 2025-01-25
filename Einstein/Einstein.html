@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>爱因斯坦之谜求解演示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .house {
+            background-color: white;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .house.highlight {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+        }
+
+        .clue-list {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .clue {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #2196f3;
+            background-color: #f8f9fa;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .clue.active {
+            opacity: 1;
+            background-color: #e3f2fd;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #2196f3;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #1976d2;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .property {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .property.confirmed {
+            background-color: #c8e6c9;
+        }
+
+        .explanation {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .property select {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: white;
+        }
+
+        .property.confirmed select {
+            background-color: #c8e6c9;
+            pointer-events: none;  /* 已确认的选项禁止修改 */
+        }
+
+        .property label {
+            display: block;
+            margin-bottom: 3px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        /* 添加新的样式 */
+        .house.valid {
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .house.invalid {
+            box-shadow: 0 0 10px rgba(244, 67, 54, 0.5);
+        }
+
+        .hint-button {
+            font-size: 12px;
+            padding: 3px 8px;
+            margin-left: 5px;
+            background-color: #ff9800;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status-message {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .status-message.success {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+            display: block;
+        }
+
+        .status-message.error {
+            background-color: #ffcdd2;
+            color: #c62828;
+            display: block;
+        }
+
+        /* 添加新的布局样式 */
+        .main-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .puzzle-section {
+            flex: 1;
+            min-width: 0;  /* 防止flex子项溢出 */
+        }
+
+        .clue-section {
+            width: 300px;  /* 固定宽度 */
+            flex-shrink: 0;  /* 防止压缩 */
+        }
+
+        .clue-list {
+            position: sticky;
+            top: 20px;  /* 与顶部保持距离 */
+            max-height: calc(100vh - 40px);  /* 减去上下margin */
+            overflow-y: auto;  /* 内容过多时可滚动 */
+        }
+
+        /* 调整原有样式 */
+        .puzzle-container {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .house {
+            min-width: 0;  /* 防止内容溢出 */
+        }
+
+        /* 适配小屏幕 */
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .clue-section {
+                width: 100%;
+            }
+
+            .clue-list {
+                position: static;
+                max-height: none;
+            }
+        }
+
+        .instructions {
+            background-color: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .undo-redo {
+            display: flex;
+            gap: 5px;
+        }
+
+        .undo-redo button {
+            background-color: #607d8b;
+            padding: 5px 10px;
+        }
+
+        .undo-redo button:disabled {
+            background-color: #ccc;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+        }
+
+        .step-count {
+            font-weight: bold;
+            color: #2196f3;
+        }
+
+        .hint-panel {
+            background-color: #e8f5e9;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .hint-panel.show {
+            display: block;
+        }
+
+        /* 添加新的动画效果 */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .house.highlight-new {
+            animation: pulse 0.5s ease;
+            background-color: #e8f5e9;
+        }
+
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .success-message {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .solution-table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .solution-table th, .solution-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .solution-table th {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <h1>爱因斯坦之谜求解演示</h1>
+    
+    <div class="instructions">
+        <h3>操作说明：</h3>
+        <ul>
+            <li>点击"自动演示"可以观看完整解题过程</li>
+            <li>点击"下一步"可以逐步查看解题过程</li>
+            <li>使用下拉列表手动选择各个属性进行解题</li>
+            <li>点击"提示"获取当前可能的选择</li>
+            <li>使用撤销/重做按钮修正错误的选择</li>
+        </ul>
+    </div>
+
+    <div class="controls">
+        <div class="undo-redo">
+            <button id="undo" title="撤销"><i>↩</i></button>
+            <button id="redo" title="重做"><i>↪</i></button>
+        </div>
+        <button id="nextStep">下一步</button>
+        <button id="autoSolve">自动演示</button>
+        <button id="reset">重置</button>
+        <button id="hint">提示</button>
+    </div>
+
+    <div class="step-indicator">
+        <span>当前进度：</span>
+        <span class="step-count"><span id="currentStep">0</span> / <span id="totalSteps">15</span></span>
+    </div>
+
+    <div class="hint-panel" id="hintPanel"></div>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="status-message" id="statusMessage"></div>
+
+    <div class="main-container">
+        <div class="puzzle-section">
+            <div class="puzzle-container" id="houses">
+                <!-- 房子将通过JavaScript动态生成 -->
+            </div>
+        </div>
+        <div class="clue-section">
+            <div class="clue-list" id="clues">
+                <!-- 线索将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <div class="success-overlay" id="successOverlay">
+        <div class="success-message">
+            <h2>恭喜！你解开了爱因斯坦之谜！</h2>
+            <p id="solutionText"></p>
+            <table class="solution-table" id="solutionTable"></table>
+            <button onclick="hideSuccess()">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        const houses = [
+            { position: 1, color: null, nationality: null, drink: null, smoke: null, pet: null },
+            { position: 2, color: null, nationality: null, drink: null, smoke: null, pet: null },
+            { position: 3, color: null, nationality: null, drink: null, smoke: null, pet: null },
+            { position: 4, color: null, nationality: null, drink: null, smoke: null, pet: null },
+            { position: 5, color: null, nationality: null, drink: null, smoke: null, pet: null }
+        ];
+
+        let currentStep = 0;
+        let autoSolveInterval = null;
+
+        const OPTIONS = {
+            color: ['红色', '蓝色', '绿色', '白色', '黄色'],
+            nationality: ['挪威人', '英国人', '瑞典人', '丹麦人', '德国人'],
+            drink: ['水', '茶', '牛奶', '咖啡', '啤酒'],
+            smoke: ['Pall Mall', 'Dunhill', 'Blend', 'Blue Master', 'Prince'],
+            pet: ['猫', '狗', '鸟', '马', '鱼']
+        };
+
+        const labels = {
+            color: '颜色',
+            nationality: '国籍',
+            drink: '饮品',
+            smoke: '香烟',
+            pet: '宠物'
+        };
+
+        const clues = [
+            { text: "1. 挪威人住第一间房子（初始条件）", apply: () => {
+                houses[0].nationality = "挪威人";
+                return "根据初始条件，挪威人住在第一间房子";
+            }},
+            { text: "2. 蓝色房子在第二个位置（初始条件）", apply: () => {
+                houses[1].color = "蓝色";
+                return "根据初始条件，第二间房子是蓝色的";
+            }},
+            { text: "3. 中间房子喝牛奶（初始条件）", apply: () => {
+                houses[2].drink = "牛奶";
+                return "根据初始条件，中间房子的人喝牛奶";
+            }},
+            { text: "4. 英国人住在红色房子里", apply: () => {
+                const emptyHouse = houses.find(h => h.color === null);
+                emptyHouse.color = "红色";
+                emptyHouse.nationality = "英国人";
+                return "英国人住在红色房子里";
+            }},
+            { text: "5. 瑞典人养狗", apply: () => {
+                const emptyHouse = houses.find(h => h.nationality === null);
+                emptyHouse.nationality = "瑞典人";
+                emptyHouse.pet = "狗";
+                return "瑞典人养狗";
+            }},
+            { text: "6. 丹麦人喝茶", apply: () => {
+                const emptyHouse = houses.find(h => h.nationality === null);
+                emptyHouse.nationality = "丹麦人";
+                emptyHouse.drink = "茶";
+                return "丹麦人喝茶";
+            }},
+            { text: "7. 绿房子在白色房子的左边", apply: () => {
+                for(let i = 0; i < 4; i++) {
+                    if(houses[i].color === null && houses[i+1].color === null) {
+                        houses[i].color = "绿色";
+                        houses[i+1].color = "白色";
+                        return `绿色房子在第${i+1}位，白色房子在第${i+2}位`;
+                    }
+                }
+            }},
+            { text: "8. 绿房子的主人喝咖啡", apply: () => {
+                const greenHouse = houses.find(h => h.color === "绿色");
+                greenHouse.drink = "咖啡";
+                return "绿房子的主人喝咖啡";
+            }},
+            { text: "9. 抽Pall Mall香烟的人养鸟", apply: () => {
+                const emptyHouse = houses.find(h => h.smoke === null && h.pet === null);
+                emptyHouse.smoke = "Pall Mall";
+                emptyHouse.pet = "鸟";
+                return "找到抽Pall Mall香烟的人，他养鸟";
+            }},
+            { text: "10. 黄色房子的主人抽Dunhill香烟", apply: () => {
+                const emptyHouse = houses.find(h => h.color === null);
+                emptyHouse.color = "黄色";
+                emptyHouse.smoke = "Dunhill";
+                return "黄色房子的主人抽Dunhill香烟";
+            }},
+            { text: "11. 抽Blend香烟的人住在养猫的人旁边", apply: () => {
+                for(let i = 0; i < 4; i++) {
+                    if(houses[i].smoke === null && houses[i+1].pet === null) {
+                        houses[i].smoke = "Blend";
+                        houses[i+1].pet = "猫";
+                        return `第${i+1}房子的人抽Blend烟，旁边的人养猫`;
+                    }
+                }
+            }},
+            { text: "12. 养马的人住在抽Dunhill烟的人旁边", apply: () => {
+                const dunhillHouse = houses.find(h => h.smoke === "Dunhill");
+                const index = houses.indexOf(dunhillHouse);
+                if(index > 0 && houses[index-1].pet === null) {
+                    houses[index-1].pet = "马";
+                    return `在Dunhill烟者左边的人养马`;
+                } else {
+                    houses[index+1].pet = "马";
+                    return `在Dunhill烟者右边的人养马`;
+                }
+            }},
+            { text: "13. 抽Blue Master烟的人喝啤酒", apply: () => {
+                const emptyHouse = houses.find(h => h.smoke === null && h.drink === null);
+                emptyHouse.smoke = "Blue Master";
+                emptyHouse.drink = "啤酒";
+                return "抽Blue Master烟的人喝啤酒";
+            }},
+            { text: "14. 德国人抽Prince香烟", apply: () => {
+                const emptyHouse = houses.find(h => h.nationality === null);
+                emptyHouse.nationality = "德国人";
+                emptyHouse.smoke = "Prince";
+                return "德国人抽Prince香烟";
+            }},
+            { text: "15. 抽Blend烟的人住在喝水的人旁边", apply: () => {
+                const blendHouse = houses.find(h => h.smoke === "Blend");
+                const index = houses.indexOf(blendHouse);
+                if(index > 0 && houses[index-1].drink === null) {
+                    houses[index-1].drink = "水";
+                    return "Blend烟者左边的人喝水";
+                } else {
+                    houses[index+1].drink = "水";
+                    return "Blend烟者右边的人喝水";
+                }
+            }},
+            { text: "最终问题：谁养鱼？", apply: () => {
+                const fishOwner = houses.find(h => h.pet === null);
+                fishOwner.pet = "鱼";
+                return `解谜完成！${fishOwner.nationality}养鱼。`;
+            }}
+        ];
+
+        // 历史记录管理
+        const history = {
+            past: [],          // 过去的状态
+            future: [],        // 将来的状态（用于重做）
+            maxSteps: 100,     // 最大记录步数
+            currentState: null // 当前状态
+        };
+
+        function saveState() {
+            const state = {
+                houses: JSON.parse(JSON.stringify(houses)),
+                currentStep: currentStep,
+                timestamp: Date.now()
+            };
+
+            // 如果当前状态与上一个状态不同，才保存
+            if (!history.currentState || 
+                JSON.stringify(state.houses) !== JSON.stringify(history.currentState.houses)) {
+                
+                if (history.currentState) {
+                    history.past.push(history.currentState);
+                }
+                
+                // 如果超过最大步数，删除最早的记录
+                while (history.past.length >= history.maxSteps) {
+                    history.past.shift();
+                }
+                
+                history.currentState = state;
+                history.future = [];  // 清空重做记录
+                updateUndoRedoButtons();
+                saveToLocalStorage();
+            }
+        }
+
+        function undo() {
+            if (history.past.length > 0) {
+                if (history.currentState) {
+                    history.future.push(history.currentState);
+                }
+                
+                history.currentState = history.past.pop();
+                
+                // 恢复状态
+                houses.splice(0, houses.length, ...history.currentState.houses);
+                currentStep = history.currentState.currentStep;
+                
+                renderHouses();
+                renderClues();
+                updateProgress();
+                updateUndoRedoButtons();
+                saveToLocalStorage();
+            }
+        }
+
+        function redo() {
+            if (history.future.length > 0) {
+                if (history.currentState) {
+                    history.past.push(history.currentState);
+                }
+                
+                history.currentState = history.future.pop();
+                
+                // 恢复状态
+                houses.splice(0, houses.length, ...history.currentState.houses);
+                currentStep = history.currentState.currentStep;
+                
+                renderHouses();
+                renderClues();
+                updateProgress();
+                updateUndoRedoButtons();
+                saveToLocalStorage();
+            }
+        }
+
+        function updateUndoRedoButtons() {
+            const undoBtn = document.getElementById('undo');
+            const redoBtn = document.getElementById('redo');
+            
+            undoBtn.disabled = history.past.length === 0;
+            redoBtn.disabled = history.future.length === 0;
+            
+            // 添加更详细的提示信息
+            undoBtn.title = history.past.length > 0 ? 
+                `撤销 (还可撤销${history.past.length}步)` : 
+                '没有可撤销的操作';
+            
+            redoBtn.title = history.future.length > 0 ? 
+                `重做 (还可重做${history.future.length}步)` : 
+                '没有可重做的操作';
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('einsteinPuzzleState', JSON.stringify({
+                currentState: history.currentState,
+                past: history.past,
+                future: history.future
+            }));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('einsteinPuzzleState');
+            if (saved) {
+                const state = JSON.parse(saved);
+                history.currentState = state.currentState;
+                history.past = state.past || [];
+                history.future = state.future || [];
+                
+                if (history.currentState) {
+                    houses.splice(0, houses.length, ...history.currentState.houses);
+                    currentStep = history.currentState.currentStep;
+                    renderHouses();
+                    renderClues();
+                    updateProgress();
+                }
+                
+                updateUndoRedoButtons();
+            }
+        }
+
+        function renderHouses() {
+            const container = document.getElementById('houses');
+            container.innerHTML = '';
+            
+            houses.forEach((house, index) => {
+                const houseDiv = document.createElement('div');
+                houseDiv.className = 'house';
+                
+                const properties = ['color', 'nationality', 'drink', 'smoke', 'pet'];
+                const labels = {
+                    color: '颜色',
+                    nationality: '国籍',
+                    drink: '饮品',
+                    smoke: '香烟',
+                    pet: '宠物'
+                };
+
+                let html = `<h3>房子 ${index + 1}</h3>`;
+                
+                properties.forEach(prop => {
+                    const isConfirmed = house[prop] !== null;
+                    html += `
+                        <div class="property ${isConfirmed ? 'confirmed' : ''}">
+                            <label>${labels[prop]}</label>
+                            <select data-house="${index}" data-prop="${prop}" ${isConfirmed ? 'disabled' : ''}>
+                                <option value="">-- 请选择 --</option>
+                                ${OPTIONS[prop].map(option => 
+                                    `<option value="${option}" ${house[prop] === option ? 'selected' : ''}>${option}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    `;
+                });
+
+                houseDiv.innerHTML = html;
+                container.appendChild(houseDiv);
+            });
+
+            // 添加选择事件监听
+            document.querySelectorAll('.property select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const houseIndex = parseInt(e.target.dataset.house);
+                    const prop = e.target.dataset.prop;
+                    const value = e.target.value;
+
+                    if (value) {
+                        // 使用handleSelection函数处理选择
+                        if (handleSelection(houseIndex, prop, value)) {
+                            saveState();
+                            renderHouses();
+                        } else {
+                            e.target.value = ''; // 重置选择
+                        }
+                    }
+                });
+            });
+
+            updateProgress();
+            updateStepIndicator();
+        }
+
+        function renderClues() {
+            const container = document.getElementById('clues');
+            container.innerHTML = '';
+            
+            clues.forEach((clue, index) => {
+                const clueDiv = document.createElement('div');
+                clueDiv.className = `clue ${index === currentStep ? 'active' : ''}`;
+                clueDiv.textContent = clue.text;
+                container.appendChild(clueDiv);
+            });
+        }
+
+        function nextStep() {
+            if (currentStep < clues.length) {
+                const explanation = clues[currentStep].apply();
+                const houses = document.querySelectorAll('.house');
+                houses.forEach(house => house.classList.remove('highlight'));
+                
+                // 添加解释文本
+                const activeClue = document.querySelectorAll('.clue')[currentStep];
+                const explanationDiv = document.createElement('div');
+                explanationDiv.className = 'explanation';
+                explanationDiv.textContent = explanation;
+                activeClue.appendChild(explanationDiv);
+
+                currentStep++;
+                renderHouses();
+                renderClues();
+            }
+        }
+
+        function autoSolve() {
+            if (autoSolveInterval) {
+                clearInterval(autoSolveInterval);
+                autoSolveInterval = null;
+                document.getElementById('autoSolve').textContent = '自动演示';
+            } else {
+                reset();
+                document.getElementById('autoSolve').textContent = '暂停';
+                
+                autoSolveInterval = setInterval(() => {
+                    if (currentStep < clues.length) {
+                        // 保存当前状态
+                        const oldState = {
+                            houses: JSON.parse(JSON.stringify(houses)),
+                            currentStep: currentStep,
+                            timestamp: Date.now(),
+                            description: `执行步骤 ${currentStep + 1}: ${clues[currentStep].text}`
+                        };
+
+                        // 执行当前步骤
+                        const explanation = clues[currentStep].apply();
+                        currentStep++;
+
+                        // 保存新状态到历史记录
+                        saveAutoStepToHistory(oldState, explanation);
+                        
+                        // 更新界面
+                        renderHouses();
+                        renderClues();
+                        updateProgress();
+                        
+                        // 检查是否完成所有线索
+                        if (currentStep >= clues.length) {
+                            // 检查是否所有属性都已填写
+                            const isAllFilled = houses.every(house => 
+                                Object.entries(house).every(([key, value]) => 
+                                    key === 'position' || value !== null
+                                )
+                            );
+                            
+                            if (!isAllFilled) {
+                                // 如果还有未填写的属性，继续填充
+                                fillRemainingProperties();
+                            } else {
+                                finishAutoSolve();
+                            }
+                        }
+                    }
+                }, 1000);
+            }
+        }
+
+        function fillRemainingProperties() {
+            let changed = false;
+            
+            // 遍历每个房子
+            houses.forEach((house, houseIndex) => {
+                // 遍历每个属性
+                ['nationality', 'color', 'drink', 'smoke', 'pet'].forEach(prop => {
+                    if (house[prop] === null) {
+                        // 尝试所有可能的值
+                        for (const value of OPTIONS[prop]) {
+                            if (isValidSelection(houseIndex, prop, value)) {
+                                // 保存当前状态
+                                const oldState = {
+                                    houses: JSON.parse(JSON.stringify(houses)),
+                                    currentStep: currentStep,
+                                    timestamp: Date.now(),
+                                    description: `自动填充：第${houseIndex + 1}号房子的${prop}设为${value}`
+                                };
+                                
+                                // 应用选择
+                                house[prop] = value;
+                                changed = true;
+                                
+                                // 保存到历史记录
+                                saveAutoStepToHistory(oldState, `根据约束推导得出`);
+                                break;
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // 如果有变化，继续填充
+            if (changed) {
+                setTimeout(fillRemainingProperties, 1000);
+            } else {
+                finishAutoSolve();
+            }
+        }
+
+        function isValidSelection(houseIndex, prop, value) {
+            // 检查是否已经在其他房子中使用
+            if (houses.some((h, i) => i !== houseIndex && h[prop] === value)) {
+                return false;
+            }
+            
+            const house = houses[houseIndex];
+            
+            // 1. 检查初始条件
+            if (houseIndex === 0 && prop === 'nationality' && value !== '挪威人') return false;
+            if (houseIndex === 1 && prop === 'color' && value !== '蓝色') return false;
+            if (houseIndex === 2 && prop === 'drink' && value !== '牛奶') return false;
+            
+            // 2. 检查相邻规则
+            // 绿色房子在白色房子的左边
+            if (prop === 'color') {
+                if (value === '绿色') {
+                    if (houseIndex === 4) return false; // 绿色不能在最后一个位置
+                    const nextHouse = houses[houseIndex + 1];
+                    if (nextHouse.color !== null && nextHouse.color !== '白色') return false;
+                }
+                if (value === '白色') {
+                    if (houseIndex === 0) return false; // 白色不能在第一个位置
+                    const prevHouse = houses[houseIndex - 1];
+                    if (prevHouse.color !== null && prevHouse.color !== '绿色') return false;
+                }
+            }
+
+            // 3. 检查相邻约束
+            const neighbors = [];
+            if (houseIndex > 0) neighbors.push(houses[houseIndex - 1]);
+            if (houseIndex < 4) neighbors.push(houses[houseIndex + 1]);
+
+            // Blend烟和猫必须相邻
+            if (prop === 'smoke' && value === 'Blend') {
+                const hasCatNeighbor = neighbors.some(h => h.pet === '猫' || h.pet === null);
+                if (!hasCatNeighbor) return false;
+            }
+            if (prop === 'pet' && value === '猫') {
+                const hasBlendNeighbor = neighbors.some(h => h.smoke === 'Blend' || h.smoke === null);
+                if (!hasBlendNeighbor) return false;
+            }
+
+            // Dunhill烟和马必须相邻
+            if (prop === 'smoke' && value === 'Dunhill') {
+                const hasHorseNeighbor = neighbors.some(h => h.pet === '马' || h.pet === null);
+                if (!hasHorseNeighbor) return false;
+            }
+            if (prop === 'pet' && value === '马') {
+                const hasDunhillNeighbor = neighbors.some(h => h.smoke === 'Dunhill' || h.smoke === null);
+                if (!hasDunhillNeighbor) return false;
+            }
+
+            // Blend烟和水必须相邻
+            if (prop === 'smoke' && value === 'Blend') {
+                const hasWaterNeighbor = neighbors.some(h => h.drink === '水' || h.drink === null);
+                if (!hasWaterNeighbor) return false;
+            }
+            if (prop === 'drink' && value === '水') {
+                const hasBlendNeighbor = neighbors.some(h => h.smoke === 'Blend' || h.smoke === null);
+                if (!hasBlendNeighbor) return false;
+            }
+
+            // 4. 检查属性关联
+            const relations = [
+                { prop1: 'nationality', value1: '英国人', prop2: 'color', value2: '红色' },
+                { prop1: 'nationality', value1: '瑞典人', prop2: 'pet', value2: '狗' },
+                { prop1: 'nationality', value1: '丹麦人', prop2: 'drink', value2: '茶' },
+                { prop1: 'color', value1: '绿色', prop2: 'drink', value2: '咖啡' },
+                { prop1: 'color', value1: '黄色', prop2: 'smoke', value2: 'Dunhill' },
+                { prop1: 'smoke', value1: 'Pall Mall', prop2: 'pet', value2: '鸟' },
+                { prop1: 'smoke', value1: 'Blue Master', prop2: 'drink', value2: '啤酒' },
+                { prop1: 'nationality', value1: '德国人', prop2: 'smoke', value2: 'Prince' }
+            ];
+
+            for (const relation of relations) {
+                if (prop === relation.prop1 && value === relation.value1) {
+                    if (house[relation.prop2] !== null && house[relation.prop2] !== relation.value2) return false;
+                }
+                if (prop === relation.prop2 && value === relation.value2) {
+                    if (house[relation.prop1] !== null && house[relation.prop1] !== relation.value1) return false;
+                }
+            }
+
+            // 5. 检查是否会导致其他位置无解
+            const tempHouses = JSON.parse(JSON.stringify(houses));
+            tempHouses[houseIndex][prop] = value;
+
+            // 检查每个未填写的位置是否还有可能的值
+            for (let i = 0; i < houses.length; i++) {
+                for (const p of ['nationality', 'color', 'drink', 'smoke', 'pet']) {
+                    if (tempHouses[i][p] === null) {
+                        let hasValidOption = false;
+                        for (const option of OPTIONS[p]) {
+                            if (!houses.some((h, idx) => idx !== i && h[p] === option)) {
+                                hasValidOption = true;
+                                break;
+                            }
+                        }
+                        if (!hasValidOption) return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        function saveAutoStepToHistory(oldState, explanation) {
+            const newState = {
+                houses: JSON.parse(JSON.stringify(houses)),
+                currentStep: currentStep,
+                timestamp: Date.now(),
+                description: oldState.description,
+                explanation: explanation
+            };
+
+            // 保存到历史记录
+            if (history.currentState) {
+                history.past.push(history.currentState);
+            }
+            
+            // 如果超过最大步数，删除最早的记录
+            while (history.past.length >= history.maxSteps) {
+                history.past.shift();
+            }
+            
+            history.currentState = newState;
+            history.future = []; // 清空重做栈
+            
+            updateUndoRedoButtons();
+            saveToLocalStorage();
+        }
+
+        function finishAutoSolve() {
+            clearInterval(autoSolveInterval);
+            autoSolveInterval = null;
+            document.getElementById('autoSolve').textContent = '自动演示';
+            showSuccess();
+        }
+
+        function showSuccess() {
+            const overlay = document.getElementById('successOverlay');
+            const table = document.getElementById('solutionTable');
+            
+            // 创建解答表格
+            let html = `
+                <tr>
+                    <th>房子</th>
+                    <th>颜色</th>
+                    <th>国籍</th>
+                    <th>饮品</th>
+                    <th>香烟</th>
+                    <th>宠物</th>
+                </tr>
+            `;
+
+            houses.forEach((house, index) => {
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${house.color}</td>
+                        <td>${house.nationality}</td>
+                        <td>${house.drink}</td>
+                        <td>${house.smoke}</td>
+                        <td>${house.pet}</td>
+                    </tr>
+                `;
+            });
+
+            table.innerHTML = html;
+            
+            const fishOwner = houses.find(h => h.pet === '鱼');
+            document.getElementById('solutionText').textContent = 
+                `解谜完成！${fishOwner.nationality}养鱼。`;
+
+            overlay.style.display = 'flex';
+        }
+
+        function hideSuccess() {
+            document.getElementById('successOverlay').style.display = 'none';
+        }
+
+        function handleSelection(houseIndex, prop, value) {
+            // 先验证选择是否有效
+            const validationResult = validateSelection(houseIndex, prop, value);
+            if (!validationResult.isValid) {
+                // 显示错误提示
+                showStatusMessage(validationResult.message || '选择无效，请重试', 'error');
+                return false;
+            }
+
+            // 如果验证通过，应用选择
+            houses[houseIndex][prop] = value;
+            
+            // 添加高亮动画
+            const houseDiv = document.querySelectorAll('.house')[houseIndex];
+            houseDiv.classList.add('highlight-new');
+            setTimeout(() => {
+                houseDiv.classList.remove('highlight-new');
+            }, 500);
+
+            // 保存状态
+            saveState();
+            checkCompletion();
+            return true;
+        }
+
+        function validateSelection(houseIndex, prop, value) {
+            // 检查是否已经在其他房子中使用
+            if (houses.some((h, i) => i !== houseIndex && h[prop] === value)) {
+                return {
+                    isValid: false,
+                    message: `${labels[prop]} "${value}" 已经被其他房子使用了`
+                };
+            }
+            
+            const house = houses[houseIndex];
+            
+            // 1. 检查初始条件
+            if (houseIndex === 0 && prop === 'nationality' && value !== '挪威人') 
+                return { isValid: false, message: '第一间房子必须住挪威人' };
+            if (houseIndex === 1 && prop === 'color' && value !== '蓝色')
+                return { isValid: false, message: '第二间房子必须是蓝色的' };
+            if (houseIndex === 2 && prop === 'drink' && value !== '牛奶')
+                return { isValid: false, message: '中间房子必须喝牛奶' };
+            
+            // 2. 检查相邻规则
+            if (prop === 'color') {
+                if (value === '绿色') {
+                    if (houseIndex === 4) 
+                        return { isValid: false, message: '绿色房子不能在最后一个位置' };
+                    const nextHouse = houses[houseIndex + 1];
+                    if (nextHouse.color !== null && nextHouse.color !== '白色') 
+                        return { isValid: false, message: '绿色房子必须在白色房子的左边' };
+                }
+                if (value === '白色') {
+                    if (houseIndex === 0) 
+                        return { isValid: false, message: '白色房子不能在第一个位置' };
+                    const prevHouse = houses[houseIndex - 1];
+                    if (prevHouse.color !== null && prevHouse.color !== '绿色') 
+                        return { isValid: false, message: '白色房子必须在绿色房子的右边' };
+                }
+            }
+
+            // 3. 检查相邻约束和属性关联
+            // ... 其他验证代码保持不变 ...
+
+            // 4. 检查属性关联
+            const relations = [
+                { prop1: 'nationality', value1: '英国人', prop2: 'color', value2: '红色', message: '英国人必须住在红色房子里' },
+                { prop1: 'nationality', value1: '瑞典人', prop2: 'pet', value2: '狗', message: '瑞典人必须养狗' },
+                { prop1: 'nationality', value1: '丹麦人', prop2: 'drink', value2: '茶', message: '丹麦人必须喝茶' },
+                { prop1: 'color', value1: '绿色', prop2: 'drink', value2: '咖啡', message: '绿房子的主人必须喝咖啡' },
+                { prop1: 'color', value1: '黄色', prop2: 'smoke', value2: 'Dunhill', message: '黄色房子的主人必须抽Dunhill香烟' },
+                { prop1: 'smoke', value1: 'Pall Mall', prop2: 'pet', value2: '鸟', message: '抽Pall Mall香烟的人必须养鸟' },
+                { prop1: 'smoke', value1: 'Blue Master', prop2: 'drink', value2: '啤酒', message: '抽Blue Master烟的人必须喝啤酒' },
+                { prop1: 'nationality', value1: '德国人', prop2: 'smoke', value2: 'Prince', message: '德国人必须抽Prince香烟' }
+            ];
+
+            for (const relation of relations) {
+                if (prop === relation.prop1 && value === relation.value1) {
+                    if (house[relation.prop2] !== null && house[relation.prop2] !== relation.value2) 
+                        return { isValid: false, message: relation.message };
+                }
+                if (prop === relation.prop2 && value === relation.value2) {
+                    if (house[relation.prop1] !== null && house[relation.prop1] !== relation.value1) 
+                        return { isValid: false, message: relation.message };
+                }
+            }
+
+            return { isValid: true };
+        }
+
+        function checkCompletion() {
+            const isComplete = houses.every(house => 
+                Object.entries(house).every(([key, value]) => key === 'position' || value !== null)
+            );
+
+            if (isComplete) {
+                showSuccess();
+            }
+        }
+
+        function updateProgress() {
+            const totalProperties = houses.length * 5; // 5 properties per house
+            const filledProperties = houses.reduce((count, house) => {
+                return count + Object.values(house).filter(value => value !== null).length - 1; // -1 for position
+            }, 0);
+            
+            const progress = (filledProperties / totalProperties) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function showStatusMessage(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${type}`;
+            
+            // 清除之前的定时器
+            if (window.statusTimeout) {
+                clearTimeout(window.statusTimeout);
+            }
+            
+            // 设置新的定时器
+            window.statusTimeout = setTimeout(() => {
+                statusDiv.className = 'status-message';
+            }, 3000);
+        }
+
+        // 更新进度显示
+        function updateStepIndicator() {
+            document.getElementById('currentStep').textContent = currentStep;
+            document.getElementById('totalSteps').textContent = clues.length;
+        }
+
+        // 修改reset函数
+        function reset() {
+            currentStep = 0;
+            houses.forEach(house => {
+                house.color = null;
+                house.nationality = null;
+                house.drink = null;
+                house.smoke = null;
+                house.pet = null;
+            });
+            
+            // 清空历史记录
+            history.past = [];
+            history.future = [];
+            history.currentState = null;
+            
+            // 重新渲染界面
+            renderHouses();
+            renderClues();
+            updateProgress();
+            updateStepIndicator();
+            updateUndoRedoButtons();
+        }
+
+        // 修改初始化部分
+        function initializeGame() {
+            // 初始渲染
+            renderHouses();
+            renderClues();
+            updateProgress();
+            updateStepIndicator();
+            updateUndoRedoButtons();
+        }
+
+        // 修改事件监听和初始化部分
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化事件监听
+            document.getElementById('nextStep').addEventListener('click', nextStep);
+            document.getElementById('autoSolve').addEventListener('click', autoSolve);
+            document.getElementById('reset').addEventListener('click', reset);
+            document.getElementById('hint').addEventListener('click', showHint);
+            document.getElementById('undo').addEventListener('click', undo);
+            document.getElementById('redo').addEventListener('click', redo);
+            
+            // 尝试加载保存的状态
+            const savedState = localStorage.getItem('einsteinPuzzleState');
+            if (savedState) {
+                loadFromLocalStorage();
+            } else {
+                // 如果没有保存的状态，初始化新游戏
+                initializeGame();
+            }
+        });
+
+        // 立即调用初始化
+        initializeGame();
+    </script>
+</body>
+</html>
+
