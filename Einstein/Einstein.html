@@ -531,8 +531,10 @@
                 currentStep: currentStep
             };
             
-            // 移除状态比较，确保每次操作都保存状态
-            history.past.push(history.currentState || state);
+            // 如果有当前状态，将其保存到历史记录中
+            if (history.currentState) {
+                history.past.push(history.currentState);
+            }
             
             // 限制历史记录长度
             while (history.past.length > history.maxSteps) {
@@ -568,26 +570,37 @@
                 updateProgress();
                 updateUndoRedoButtons();
                 saveToLocalStorage();
+
+                // 显示状态消息
+                showStatusMessage('已撤销上一步操作', 'success');
             }
         }
 
         function redo() {
             if (history.future.length > 0) {
-                if (history.currentState) {
-                    history.past.push(history.currentState);
-                }
+                // 保存当前状态到past
+                history.past.push(history.currentState);
                 
-                history.currentState = history.future.pop();
+                // 获取下一个状态
+                const nextState = history.future.pop();
+                history.currentState = nextState;
                 
-                // 恢复状态
-                houses.splice(0, houses.length, ...history.currentState.houses);
-                currentStep = history.currentState.currentStep;
+                // 深拷贝恢复状态
+                houses.length = 0;
+                nextState.houses.forEach(house => {
+                    houses.push(JSON.parse(JSON.stringify(house)));
+                });
+                currentStep = nextState.currentStep;
                 
+                // 更新界面
                 renderHouses();
                 renderClues();
                 updateProgress();
                 updateUndoRedoButtons();
                 saveToLocalStorage();
+
+                // 显示状态消息
+                showStatusMessage('已重做操作', 'success');
             }
         }
 
@@ -683,10 +696,7 @@
 
                     if (value) {
                         // 使用handleSelection函数处理选择
-                        if (handleSelection(houseIndex, prop, value)) {
-                            saveState();
-                            renderHouses();
-                        } else {
+                        if (!handleSelection(houseIndex, prop, value)) {
                             e.target.value = ''; // 重置选择
                         }
                     }
@@ -1005,14 +1015,13 @@
         }
 
         function handleSelection(houseIndex, prop, value) {
-            // 在应用更改前保存当前状态
             const validationResult = validateSelection(houseIndex, prop, value);
             if (!validationResult.isValid) {
                 showStatusMessage(validationResult.message || '选择无效，请重试', 'error');
                 return false;
             }
 
-            // 保存当前状态
+            // 保存当前状态（只保存一次）
             saveState();
             
             // 应用新的选择
@@ -1025,6 +1034,8 @@
                 houseDiv.classList.remove('highlight-new');
             }, 500);
 
+            // 更新UI
+            renderHouses();
             checkCompletion();
             return true;
         }
