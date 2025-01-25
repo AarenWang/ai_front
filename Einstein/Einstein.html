@@ -577,7 +577,7 @@
                 saveToLocalStorage();
 
                 // 显示状态消息
-                showStatusMessage('已撤销上一步操作', 'success');
+                showStatusMessage('已撤销上一步操作', 'success', true);
             }
         }
 
@@ -605,7 +605,7 @@
                 saveToLocalStorage();
 
                 // 显示状态消息
-                showStatusMessage('已重做操作', 'success');
+                showStatusMessage('已重做操作', 'success', true);
             }
         }
 
@@ -802,8 +802,8 @@
                 renderHouses();
                 renderClues();
                 
-                // 显示状态消息
-                showStatusMessage(`执行第 ${currentStep} 步：${detailedExplanation}`, 'success');
+                // 显示状态消息，不自动隐藏
+                showStatusMessage(`执行第 ${currentStep} 步：${detailedExplanation}`, 'success', false);
             }
         }
 
@@ -1189,7 +1189,7 @@
         function handleSelection(houseIndex, prop, value) {
             const validationResult = validateSelection(houseIndex, prop, value);
             if (!validationResult.isValid) {
-                showStatusMessage(validationResult.message || '选择无效，请重试', 'error');
+                showStatusMessage(validationResult.message || '选择无效，请重试', 'error', true);
                 return false;
             }
 
@@ -1298,20 +1298,21 @@
             document.getElementById('progressFill').style.width = `${progress}%`;
         }
 
-        function showStatusMessage(message, type) {
+        function showStatusMessage(message, type, autoHide = false) {
             const statusDiv = document.getElementById('statusMessage');
             statusDiv.textContent = message;
             statusDiv.className = `status-message ${type}`;
             
-            // 清除之前的定时器
-            if (window.statusTimeout) {
-                clearTimeout(window.statusTimeout);
+            // 只有当autoHide为true时才自动隐藏
+            if (autoHide) {
+                if (window.statusTimeout) {
+                    clearTimeout(window.statusTimeout);
+                }
+                
+                window.statusTimeout = setTimeout(() => {
+                    statusDiv.className = 'status-message';
+                }, 3000);
             }
-            
-            // 设置新的定时器
-            window.statusTimeout = setTimeout(() => {
-                statusDiv.className = 'status-message';
-            }, 3000);
         }
 
         // 更新进度显示
