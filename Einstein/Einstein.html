@@ -424,10 +424,15 @@
                 return "根据初始条件，中间房子的人喝牛奶";
             }},
             { text: "4. 英国人住在红色房子里", apply: () => {
-                const emptyHouse = houses.find(h => h.color === null);
-                emptyHouse.color = "红色";
-                emptyHouse.nationality = "英国人";
-                return "英国人住在红色房子里";
+                const availableHouse = houses.find((h, index) => 
+                    index !== 0 && h.nationality === null && h.color === null
+                );
+                if (availableHouse) {
+                    availableHouse.nationality = "英国人";
+                    availableHouse.color = "红色";
+                    return "英国人住在红色房子里";
+                }
+                return "无法放置英国人和红色房子";
             }},
             { text: "5. 瑞典人养狗", apply: () => {
                 const emptyHouse = houses.find(h => h.nationality === null);
@@ -825,13 +830,20 @@
                 pet: OPTIONS.pet.filter(v => !usedValues.pet.includes(v))
             };
 
-            // 遍历每个房子
+            // 修改属性填充顺序，确保先处理关键约束
+            const propertyOrder = ['nationality', 'color', 'drink', 'smoke', 'pet'];
+            
             for (let houseIndex = 0; houseIndex < houses.length; houseIndex++) {
                 const house = houses[houseIndex];
                 
-                // 遍历每个属性
-                for (const prop of ['nationality', 'color', 'drink', 'smoke', 'pet']) {
+                for (const prop of propertyOrder) {
                     if (house[prop] === null) {
+                        // 确保第一间房子的特殊处理
+                        if (houseIndex === 0 && prop === 'nationality' && house.nationality === null) {
+                            house.nationality = '挪威人';
+                            continue;
+                        }
+                        
                         // 尝试剩余的值
                         for (const value of remainingValues[prop]) {
                             if (isValidSelection(houseIndex, prop, value)) {
@@ -906,12 +918,21 @@
             
             const house = houses[houseIndex];
             
-            // 1. 检查初始条件
-            if (houseIndex === 0 && prop === 'nationality' && value !== '挪威人') return false;
+            // 1. 严格检查初始条件
+            if (houseIndex === 0) {
+                if (prop === 'nationality' && value !== '挪威人') return false;
+                if (prop === 'color' && value === '红色') return false; // 第一间房子不能是红色（因为英国人住红色房子）
+            }
             if (houseIndex === 1 && prop === 'color' && value !== '蓝色') return false;
             if (houseIndex === 2 && prop === 'drink' && value !== '牛奶') return false;
             
-            // 2. 检查相邻规则
+            // 2. 检查英国人和红色房子的关系
+            if (prop === 'nationality' && value === '英国人' && house.color !== null && house.color !== '红色') return false;
+            if (prop === 'color' && value === '红色' && house.nationality !== null && house.nationality !== '英国人') return false;
+            if (prop === 'nationality' && value === '英国人' && houseIndex === 0) return false; // 英国人不能住第一间房子
+            if (prop === 'color' && value === '红色' && houseIndex === 0) return false; // 第一间房子不能是红色
+
+            // 3. 检查相邻规则
             // 绿色房子在白色房子的左边
             if (prop === 'color') {
                 if (value === '绿色') {
@@ -926,7 +947,7 @@
                 }
             }
 
-            // 3. 检查相邻约束
+            // 4. 检查相邻约束
             const neighbors = [];
             if (houseIndex > 0) neighbors.push(houses[houseIndex - 1]);
             if (houseIndex < 4) neighbors.push(houses[houseIndex + 1]);
@@ -961,7 +982,7 @@
                 if (!hasBlendNeighbor) return false;
             }
 
-            // 4. 检查属性关联
+            // 5. 检查属性关联
             const relations = [
                 { prop1: 'nationality', value1: '英国人', prop2: 'color', value2: '红色' },
                 { prop1: 'nationality', value1: '瑞典人', prop2: 'pet', value2: '狗' },
@@ -982,7 +1003,7 @@
                 }
             }
 
-            // 5. 检查是否会导致其他位置无解
+            // 6. 检查是否会导致其他位置无解
             const tempHouses = JSON.parse(JSON.stringify(houses));
             tempHouses[houseIndex][prop] = value;
 
