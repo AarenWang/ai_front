@@ -729,19 +729,81 @@
                 // 保存当前状态
                 saveState();
                 
-                const explanation = clues[currentStep].apply();
+                // 获取当前线索并执行
+                const clue = clues[currentStep];
+                const explanation = clue.apply();
+                
+                // 高亮显示相关房子
                 const houses = document.querySelectorAll('.house');
                 houses.forEach(house => house.classList.remove('highlight'));
                 
+                // 添加解释文本，包含推理过程
                 const activeClue = document.querySelectorAll('.clue')[currentStep];
                 const explanationDiv = document.createElement('div');
                 explanationDiv.className = 'explanation';
-                explanationDiv.textContent = explanation;
+                
+                // 根据不同线索提供详细的推理说明
+                let detailedExplanation = '';
+                switch (currentStep) {
+                    case 0:
+                        detailedExplanation = "根据初始条件，挪威人必须住在第一间房子。这是问题的基本条件之一。";
+                        break;
+                    case 1:
+                        detailedExplanation = "根据初始条件，第二间房子必须是蓝色的。这是问题的基本条件之一。";
+                        break;
+                    case 2:
+                        detailedExplanation = "根据初始条件，中间房子（第三间）的人喝牛奶。这是问题的基本条件之一。";
+                        break;
+                    case 3:
+                        detailedExplanation = "根据线索，英国人住在红色房子里。注意：由于第一间房子已经住了挪威人，所以英国人不能住在第一间房子。";
+                        break;
+                    case 4:
+                        detailedExplanation = "根据线索，瑞典人养狗。我们需要找到一个还没有确定国籍的房子来安置瑞典人。";
+                        break;
+                    case 5:
+                        detailedExplanation = "根据线索，丹麦人喝茶。需要找到一个还没有确定国籍和饮品的房子。";
+                        break;
+                    case 6:
+                        detailedExplanation = "根据线索，绿色房子必须在白色房子的左边。这意味着绿色房子不能在最后一个位置，白色房子不能在第一个位置。";
+                        break;
+                    case 7:
+                        detailedExplanation = "根据线索，绿房子的主人喝咖啡。找到绿色房子并确定其饮品为咖啡。";
+                        break;
+                    case 8:
+                        detailedExplanation = "根据线索，抽Pall Mall香烟的人养鸟。需要找到一个还没有确定香烟和宠物的房子。";
+                        break;
+                    case 9:
+                        detailedExplanation = "根据线索，黄色房子的主人抽Dunhill香烟。需要找到一个还没有确定颜色和香烟的房子。";
+                        break;
+                    case 10:
+                        detailedExplanation = "根据线索，抽Blend香烟的人住在养猫的人旁边。这是一个相邻关系的约束。";
+                        break;
+                    case 11:
+                        detailedExplanation = "根据线索，养马的人住在抽Dunhill烟的人旁边。找到抽Dunhill烟的房子，然后在其相邻位置安排养马的人。";
+                        break;
+                    case 12:
+                        detailedExplanation = "根据线索，抽Blue Master烟的人喝啤酒。需要找到一个还没有确定香烟和饮品的房子。";
+                        break;
+                    case 13:
+                        detailedExplanation = "根据线索，德国人抽Prince香烟。需要找到最后一个还没有确定国籍的房子。";
+                        break;
+                    case 14:
+                        detailedExplanation = "根据线索，抽Blend烟的人住在喝水的人旁边。找到抽Blend烟的房子，然后在其相邻位置安排喝水的人。";
+                        break;
+                    case 15:
+                        detailedExplanation = "最后一步：找到还没有确定宠物的房子，那个人一定养鱼。";
+                        break;
+                }
+                
+                explanationDiv.textContent = detailedExplanation;
                 activeClue.appendChild(explanationDiv);
 
                 currentStep++;
                 renderHouses();
                 renderClues();
+                
+                // 显示状态消息
+                showStatusMessage(`执行第 ${currentStep} 步：${detailedExplanation}`, 'success');
             }
         }
 
