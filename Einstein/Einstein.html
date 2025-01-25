@@ -528,42 +528,41 @@
         function saveState() {
             const state = {
                 houses: JSON.parse(JSON.stringify(houses)),
-                currentStep: currentStep,
-                timestamp: Date.now()
+                currentStep: currentStep
             };
-
-            // 如果当前状态与上一个状态不同，才保存
-            if (!history.currentState || 
-                JSON.stringify(state.houses) !== JSON.stringify(history.currentState.houses)) {
-                
-                if (history.currentState) {
-                    history.past.push(history.currentState);
-                }
-                
-                // 如果超过最大步数，删除最早的记录
-                while (history.past.length >= history.maxSteps) {
-                    history.past.shift();
-                }
-                
-                history.currentState = state;
-                history.future = [];  // 清空重做记录
-                updateUndoRedoButtons();
-                saveToLocalStorage();
+            
+            // 移除状态比较，确保每次操作都保存状态
+            history.past.push(history.currentState || state);
+            
+            // 限制历史记录长度
+            while (history.past.length > history.maxSteps) {
+                history.past.shift();
             }
+            
+            history.currentState = state;
+            history.future = [];  // 清空重做记录
+            
+            updateUndoRedoButtons();
+            saveToLocalStorage();
         }
 
         function undo() {
             if (history.past.length > 0) {
-                if (history.currentState) {
-                    history.future.push(history.currentState);
-                }
+                // 将当前状态保存到future
+                history.future.push(history.currentState);
                 
-                history.currentState = history.past.pop();
+                // 获取上一个状态
+                const previousState = history.past.pop();
+                history.currentState = previousState;
                 
-                // 恢复状态
-                houses.splice(0, houses.length, ...history.currentState.houses);
-                currentStep = history.currentState.currentStep;
+                // 深拷贝恢复状态
+                houses.length = 0; // 清空当前数组
+                previousState.houses.forEach(house => {
+                    houses.push(JSON.parse(JSON.stringify(house)));
+                });
+                currentStep = previousState.currentStep;
                 
+                // 更新界面
                 renderHouses();
                 renderClues();
                 updateProgress();
@@ -712,11 +711,13 @@
 
         function nextStep() {
             if (currentStep < clues.length) {
+                // 保存当前状态
+                saveState();
+                
                 const explanation = clues[currentStep].apply();
                 const houses = document.querySelectorAll('.house');
                 houses.forEach(house => house.classList.remove('highlight'));
                 
-                // 添加解释文本
                 const activeClue = document.querySelectorAll('.clue')[currentStep];
                 const explanationDiv = document.createElement('div');
                 explanationDiv.className = 'explanation';
@@ -1004,15 +1005,17 @@
         }
 
         function handleSelection(houseIndex, prop, value) {
-            // 先验证选择是否有效
+            // 在应用更改前保存当前状态
             const validationResult = validateSelection(houseIndex, prop, value);
             if (!validationResult.isValid) {
-                // 显示错误提示
                 showStatusMessage(validationResult.message || '选择无效，请重试', 'error');
                 return false;
             }
 
-            // 如果验证通过，应用选择
+            // 保存当前状态
+            saveState();
+            
+            // 应用新的选择
             houses[houseIndex][prop] = value;
             
             // 添加高亮动画
@@ -1022,8 +1025,6 @@
                 houseDiv.classList.remove('highlight-new');
             }, 500);
 
-            // 保存状态
-            saveState();
             checkCompletion();
             return true;
         }
