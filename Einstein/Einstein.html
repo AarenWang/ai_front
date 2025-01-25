@@ -795,40 +795,106 @@
         function fillRemainingProperties() {
             let changed = false;
             
+            // 首先检查是否还有未填写的属性
+            const hasEmptyProperties = houses.some(house => 
+                Object.entries(house).some(([key, value]) => 
+                    key !== 'position' && value === null
+                )
+            );
+
+            if (!hasEmptyProperties) {
+                finishAutoSolve();
+                return;
+            }
+
+            // 获取所有已使用的值
+            const usedValues = {
+                nationality: houses.map(h => h.nationality).filter(v => v !== null),
+                color: houses.map(h => h.color).filter(v => v !== null),
+                drink: houses.map(h => h.drink).filter(v => v !== null),
+                smoke: houses.map(h => h.smoke).filter(v => v !== null),
+                pet: houses.map(h => h.pet).filter(v => v !== null)
+            };
+
+            // 获取每个属性的剩余可用值
+            const remainingValues = {
+                nationality: OPTIONS.nationality.filter(v => !usedValues.nationality.includes(v)),
+                color: OPTIONS.color.filter(v => !usedValues.color.includes(v)),
+                drink: OPTIONS.drink.filter(v => !usedValues.drink.includes(v)),
+                smoke: OPTIONS.smoke.filter(v => !usedValues.smoke.includes(v)),
+                pet: OPTIONS.pet.filter(v => !usedValues.pet.includes(v))
+            };
+
             // 遍历每个房子
-            houses.forEach((house, houseIndex) => {
+            for (let houseIndex = 0; houseIndex < houses.length; houseIndex++) {
+                const house = houses[houseIndex];
+                
                 // 遍历每个属性
-                ['nationality', 'color', 'drink', 'smoke', 'pet'].forEach(prop => {
+                for (const prop of ['nationality', 'color', 'drink', 'smoke', 'pet']) {
                     if (house[prop] === null) {
-                        // 尝试所有可能的值
-                        for (const value of OPTIONS[prop]) {
+                        // 尝试剩余的值
+                        for (const value of remainingValues[prop]) {
                             if (isValidSelection(houseIndex, prop, value)) {
                                 // 保存当前状态
                                 const oldState = {
                                     houses: JSON.parse(JSON.stringify(houses)),
                                     currentStep: currentStep,
-                                    timestamp: Date.now(),
-                                    description: `自动填充：第${houseIndex + 1}号房子的${prop}设为${value}`
+                                    description: `自动填充：第${houseIndex + 1}号房子的${labels[prop]}设为${value}`
                                 };
                                 
                                 // 应用选择
                                 house[prop] = value;
                                 changed = true;
                                 
+                                // 从剩余值中移除已使用的值
+                                remainingValues[prop] = remainingValues[prop].filter(v => v !== value);
+                                
                                 // 保存到历史记录
-                                saveAutoStepToHistory(oldState, `根据约束推导得出`);
+                                saveAutoStepToHistory(oldState, `根据约束条件推导，第${houseIndex + 1}号房子的${labels[prop]}是${value}`);
+                                
+                                // 更新界面
+                                renderHouses();
+                                renderClues();
+                                updateProgress();
                                 break;
                             }
                         }
                     }
-                });
-            });
+                }
+            }
             
             // 如果有变化，继续填充
             if (changed) {
                 setTimeout(fillRemainingProperties, 1000);
             } else {
-                finishAutoSolve();
+                // 如果没有变化但仍有空值，可能需要回溯
+                const hasNull = houses.some(house => 
+                    Object.values(house).some(value => value === null)
+                );
+                
+                if (hasNull) {
+                    // 尝试使用未使用的值填充剩余空位
+                    houses.forEach((house, index) => {
+                        Object.keys(house).forEach(prop => {
+                            if (prop !== 'position' && house[prop] === null) {
+                                const unusedValue = remainingValues[prop][0];
+                                if (unusedValue) {
+                                    house[prop] = unusedValue;
+                                    remainingValues[prop].shift();
+                                    changed = true;
+                                }
+                            }
+                        });
+                    });
+                    
+                    if (changed) {
+                        setTimeout(fillRemainingProperties, 1000);
+                    } else {
+                        finishAutoSolve();
+                    }
+                } else {
+                    finishAutoSolve();
+                }
             }
         }
 
@@ -936,7 +1002,30 @@
                 }
             }
 
+            // 添加新的约束条件
+            if (prop === 'smoke' && value === 'Blend') {
+                const neighbors = getNeighbors(houseIndex);
+                const hasWaterNeighbor = neighbors.some(h => h.drink === '水' || h.drink === null);
+                if (!hasWaterNeighbor) return false;
+            }
+            if (prop === 'drink' && value === '水') {
+                const neighbors = getNeighbors(houseIndex);
+                const hasBlendNeighbor = neighbors.some(h => h.smoke === 'Blend' || h.smoke === null);
+                if (!hasBlendNeighbor) return false;
+            }
+
+            // Blue Master烟和啤酒的关系
+            if (prop === 'smoke' && value === 'Blue Master' && house.drink !== null && house.drink !== '啤酒') return false;
+            if (prop === 'drink' && value === '啤酒' && house.smoke !== null && house.smoke !== 'Blue Master') return false;
+
             return true;
+        }
+
+        function getNeighbors(houseIndex) {
+            const neighbors = [];
+            if (houseIndex > 0) neighbors.push(houses[houseIndex - 1]);
+            if (houseIndex < houses.length - 1) neighbors.push(houses[houseIndex + 1]);
+            return neighbors;
         }
 
         function saveAutoStepToHistory(oldState, explanation) {
