@@ -276,6 +276,66 @@
             transform: scale(1.1);
             transition: all 0.1s ease;
         }
+
+        /* 添加切换按钮样式 */
+        .os-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: #f5f5f5;
+            padding: 8px 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .os-toggle:hover {
+            background: #e0e0e0;
+        }
+
+        /* Mac系统键符号样式 */
+        .keyboard.mac .key[data-mac="Cmd"]::before {
+            content: "⌘";
+            margin-right: 4px;
+            font-size: 14px;
+        }
+
+        .keyboard.mac .key[data-mac="Option"]::before {
+            content: "⌥";
+            margin-right: 4px;
+            font-size: 14px;
+        }
+
+        /* 调整Mac按键的内部布局 */
+        .keyboard.mac .key[data-mac] {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        /* Windows系统键样式 */
+        .keyboard:not(.mac) .key[data-win="Win"] {
+            display: flex !important;
+        }
+
+        .keyboard:not(.mac) .key[data-win="Alt"] {
+            display: flex !important;
+        }
+
+        .keyboard:not(.mac) .key[data-win="Ctrl"] {
+            display: flex !important;
+        }
+
+        .keyboard:not(.mac) .key[data-mac="Cmd"],
+        .keyboard:not(.mac) .key[data-mac="Option"],
+        .keyboard:not(.mac) .key[data-mac="Control"] {
+            display: none;
+        }
     </style>
 
     <script>
@@ -332,10 +392,34 @@
                     }
                 });
             });
+
+            // 添加操作系统切换功能
+            const osToggle = document.querySelector('.os-toggle');
+            const keyboards = document.querySelectorAll('.keyboard');
+            let isMac = false;
+
+            osToggle.addEventListener('click', function() {
+                isMac = !isMac;
+                keyboards.forEach(keyboard => {
+                    keyboard.classList.toggle('mac');
+                    // 更新按键文本
+                    keyboard.querySelectorAll('.key[data-win]').forEach(key => {
+                        if (isMac) {
+                            key.textContent = key.getAttribute('data-mac');
+                            // 移除之前可能存在的符号
+                            key.innerHTML = key.getAttribute('data-mac');
+                        } else {
+                            key.textContent = key.getAttribute('data-win');
+                        }
+                    });
+                });
+                osToggle.textContent = isMac ? 'Switch to Windows' : 'Switch to Mac';
+            });
         });
     </script>
 </head>
 <body>
+    <button class="os-toggle">Switch to Mac</button>
     <div class="nav-sidebar">
         <button class="nav-toggle"><i></i></button>
         <ul>
@@ -438,14 +522,14 @@
                 </div>
                 <!-- Bottom row -->
                 <div class="key-row">
-                    <div class="key wide">Ctrl</div>
-                    <div class="key wide">Win</div>
-                    <div class="key wide">Alt</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
                     <div class="key space">Space</div>
-                    <div class="key wide">Alt</div>
-                    <div class="key wide">Win</div>
-                    <div class="key wide">Menu</div>
-                    <div class="key wide">Ctrl</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
+                    <div class="key wide">Fn</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
                 </div>
             </div>
 
@@ -604,14 +688,14 @@
                 </div>
                 <!-- Bottom row -->
                 <div class="key-row">
-                    <div class="key wide">Ctrl</div>
-                    <div class="key wide">Win</div>
-                    <div class="key wide">Alt</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
                     <div class="key space">Space</div>
-                    <div class="key wide">Alt</div>
-                    <div class="key wide">Win</div>
-                    <div class="key wide">Menu</div>
-                    <div class="key wide">Ctrl</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
+                    <div class="key wide">Fn</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
                 </div>
             </div>
 
@@ -737,14 +821,14 @@
                 </div>
                 <!-- Bottom row -->
                 <div class="key-row">
-                    <div class="key wide">Ctrl</div>
-                    <div class="key wide">Win</div>
-                    <div class="key wide">Alt</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
                     <div class="key space">Space</div>
-                    <div class="key wide">Alt</div>
-                    <div class="key wide">Win</div>
-                    <div class="key wide">Menu</div>
-                    <div class="key wide">Ctrl</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
+                    <div class="key wide">Fn</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
                 </div>
             </div>
 
@@ -874,15 +958,14 @@
                 </div>
                 <!-- Bottom row -->
                 <div class="key-row">
-                    <div class="key wide">Ctrl</div>
-                    <div class="key wide">Win</div>
-                    <div class="key wide">Alt</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
                     <div class="key space">Space</div>
-                    <div class="key wide">Alt</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
                     <div class="key wide">Fn</div>
-                    <div class="key">←</div>
-                    <div class="key">↓</div>
-                    <div class="key">→</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
                 </div>
             </div>
         </div>
@@ -963,15 +1046,14 @@
                 </div>
                 <!-- Bottom row -->
                 <div class="key-row">
-                    <div class="key wide">Ctrl</div>
-                    <div class="key wide">Win</div>
-                    <div class="key wide">Alt</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
                     <div class="key space">Space</div>
-                    <div class="key wide">Alt</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
                     <div class="key wide">Fn</div>
-                    <div class="key">←</div>
-                    <div class="key">↓</div>
-                    <div class="key">→</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
                 </div>
             </div>
         </div>
@@ -1047,14 +1129,14 @@
                 </div>
                 <!-- Bottom row -->
                 <div class="key-row">
-                    <div class="key wide">Ctrl</div>
-                    <div class="key wide">Win</div>
-                    <div class="key wide">Alt</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
                     <div class="key space">Space</div>
-                    <div class="key wide">Alt</div>
-                    <div class="key wide">Win</div>
+                    <div class="key wide" data-win="Alt" data-mac="Option">Alt</div>
+                    <div class="key wide" data-win="Win" data-mac="Cmd">Win</div>
                     <div class="key wide">Fn</div>
-                    <div class="key wide">Ctrl</div>
+                    <div class="key wide" data-win="Ctrl" data-mac="Control">Ctrl</div>
                 </div>
             </div>
         </div>
