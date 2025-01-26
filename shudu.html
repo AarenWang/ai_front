@@ -152,6 +152,69 @@
             color: red;
         }
 
+        /* 添加计时器样式 */
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;  /* 使用与按钮相同的绿色背景 */
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);  /* 增强阴影效果 */
+            font-size: 1.8em;  /* 增大字体大小 */
+            font-family: monospace;
+            color: white;  /* 白色字体 */
+            font-weight: bold;  /* 加粗字体 */
+            z-index: 1000;
+            min-width: 140px;  /* 确保宽度足够容纳时间显示 */
+            text-align: center;  /* 文字居中 */
+            letter-spacing: 2px;  /* 字符间距增加 */
+        }
+
+        /* 添加暂停/继续按钮样式 */
+        .timer-controls {
+            position: fixed;
+            top: 70px;  /* 位于计时器下方 */
+            right: 20px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .timer-btn {
+            padding: 5px 10px;
+            font-size: 14px;
+            background-color: #45a049;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .timer-btn:hover {
+            background-color: #3d8b40;
+        }
+
+        .timer-btn.pause {
+            display: block;
+        }
+
+        .timer-btn.resume {
+            display: none;
+        }
+
+        /* 计时器暂停时的样式 */
+        .timer.paused {
+            background-color: #666;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.7;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -164,12 +227,21 @@
             <button onclick="checkSolution()">检查</button>
             <button onclick="showHint()">提示</button>
         </div>
+        <div class="timer" id="timer">00:00:00</div>
+        <div class="timer-controls">
+            <button class="timer-btn pause" id="pauseBtn" onclick="pauseGame()">暂停</button>
+            <button class="timer-btn resume" id="resumeBtn" onclick="resumeGame()">继续</button>
+        </div>
     </div>
 
     <script>
         let selectedCell = null;
         let puzzle = [];
         let solution = [];
+        let timerInterval;
+        let startTime;
+        let isTimerRunning = false;
+        let isPaused = false;
 
         function generatePuzzle() {
             // 创建1-9的随机排列
@@ -376,6 +448,12 @@
         function newGame() {
             generatePuzzle();
             createBoard();
+            resetTimer();
+            startTimer();
+            isPaused = false;
+            document.getElementById('timer').classList.remove('paused');
+            document.getElementById('pauseBtn').style.display = 'block';
+            document.getElementById('resumeBtn').style.display = 'none';
         }
 
         function showHint() {
@@ -405,6 +483,81 @@
                     emptyFound = true;
                 }
             });
+        }
+
+        // 计时器函数
+        function startTimer() {
+            if (!isTimerRunning) {
+                startTime = Date.now() - (window.pausedTime || 0);
+                isTimerRunning = true;
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+        }
+
+        function stopTimer() {
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                window.pausedTime = Date.now() - startTime;
+                isTimerRunning = false;
+            }
+        }
+
+        function resetTimer() {
+            stopTimer();
+            window.pausedTime = 0;
+            document.getElementById('timer').textContent = '00:00:00';
+        }
+
+        function updateTimer() {
+            const currentTime = Date.now() - startTime;
+            const seconds = Math.floor((currentTime / 1000) % 60);
+            const minutes = Math.floor((currentTime / (1000 * 60)) % 60);
+            const hours = Math.floor((currentTime / (1000 * 60 * 60)) % 24);
+
+            const timeString = `${padNumber(hours)}:${padNumber(minutes)}:${padNumber(seconds)}`;
+            document.getElementById('timer').textContent = timeString;
+        }
+
+        function padNumber(number) {
+            return number.toString().padStart(2, '0');
+        }
+
+        function pauseGame() {
+            if (isTimerRunning && !isPaused) {
+                stopTimer();
+                isPaused = true;
+                document.getElementById('timer').classList.add('paused');
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('resumeBtn').style.display = 'block';
+                
+                // 禁用所有数字按钮和格子
+                const numberBtns = document.querySelectorAll('.number-btn');
+                numberBtns.forEach(btn => btn.disabled = true);
+                const cells = document.querySelectorAll('.cell:not(.fixed)');
+                cells.forEach(cell => {
+                    cell.style.pointerEvents = 'none';
+                    cell.style.opacity = '0.7';
+                });
+            }
+        }
+
+        function resumeGame() {
+            if (isPaused) {
+                startTimer();
+                isPaused = false;
+                document.getElementById('timer').classList.remove('paused');
+                document.getElementById('pauseBtn').style.display = 'block';
+                document.getElementById('resumeBtn').style.display = 'none';
+                
+                // 重新启用所有数字按钮和格子
+                const numberBtns = document.querySelectorAll('.number-btn');
+                numberBtns.forEach(btn => btn.disabled = false);
+                const cells = document.querySelectorAll('.cell:not(.fixed)');
+                cells.forEach(cell => {
+                    cell.style.pointerEvents = 'auto';
+                    cell.style.opacity = '1';
+                });
+            }
         }
 
         // 开始新游戏
