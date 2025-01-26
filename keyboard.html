@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Layouts</title>
+    <style>
+        .keyboard-container {
+            max-width: 1300px;
+            margin: 20px auto;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            margin-left: 40px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .keyboard-container.shift {
+            margin-left: 200px;
+        }
+
+        .keyboard {
+            background: #e0e0e0;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: relative;
+            min-height: 400px;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .layout-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: left;
+            padding-left: 20px;
+        }
+
+        .key-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+            justify-content: center;
+        }
+
+        .key {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            min-width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+
+        .key.wide {
+            min-width: 60px;
+        }
+
+        .key.extra-wide {
+            min-width: 85px;
+        }
+
+        .key.space {
+            min-width: 200px;
+        }
+
+        .key.fn {
+            background: #f0f0f0;
+        }
+
+        .key.mod {
+            background: #e8e8e8;
+        }
+
+        .main-keys {
+            width: 750px;
+            display: inline-block;
+            vertical-align: top;
+            position: relative;
+            margin-right: 15px;
+        }
+        
+        .control-section {
+            display: inline-block;
+            vertical-align: top;
+            width: 180px;
+            margin-right: 15px;
+        }
+        
+        .numpad-section {
+            display: inline-block;
+            vertical-align: top;
+            width: 180px;
+        }
+
+        .keyboard.compact {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .keyboard.compact .main-keys {
+            width: 100%;
+            margin-right: 0;
+        }
+
+        .keyboard.sixtyfive {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .keyboard.sixtyfive .main-keys {
+            width: 100%;
+            margin-right: 0;
+        }
+
+        .keyboard.seventyfive {
+            max-width: 950px;
+            margin: 0 auto;
+        }
+        
+        .keyboard.seventyfive .main-keys {
+            width: 100%;
+            margin-right: 0;
+        }
+
+        .keyboard.tkl {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            text-align: left;
+            padding: 20px 20px 20px 40px;
+        }
+        
+        .keyboard.tkl .main-keys {
+            width: 700px;
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 0;
+        }
+
+        .keyboard.tkl .control-section {
+            position: absolute;
+            right: 40px;
+            top: 80px;
+            width: 160px;
+            margin: 0;
+        }
+
+        .keyboard.night_six {
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+            padding: 20px;
+        }
+        
+        .keyboard.night_six .main-keys {
+            width: 750px;
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .keyboard.night_six .numpad-section {
+            display: inline-block;
+            vertical-align: top;
+            width: 200px;
+            margin-left: 20px;
+        }
+
+        .keyboard:last-child {
+            margin-bottom: 30px;
+        }
+
+        /* 导航条样式 */
+        .nav-sidebar {
+            position: fixed;
+            left: -180px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 100;
+            transition: left 0.3s ease;
+        }
+
+        .nav-sidebar.show {
+            left: 0;
+        }
+
+        .nav-toggle {
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #f5f5f5;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            padding: 8px;
+            cursor: pointer;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .nav-toggle:hover {
+            background: #e0e0e0;
+        }
+
+        .nav-toggle i {
+            border: solid #333;
+            border-width: 0 2px 2px 0;
+            display: inline-block;
+            padding: 4px;
+            transform: rotate(-45deg);
+        }
+
+        .nav-sidebar.show .nav-toggle i {
+            transform: rotate(135deg);
+        }
+
+        .nav-sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-sidebar li {
+            margin: 10px 0;
+        }
+
+        .nav-sidebar a {
+            text-decoration: none;
+            color: #333;
+            font-size: 14px;
+            display: block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-sidebar a:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* 调整100%布局的样式 */
+        #full.keyboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: left;
+            position: relative;
+        }
+
+        #full .main-keys {
+            width: 700px;
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 90px;
+        }
+
+        #full .control-section {
+            width: 160px;
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 90px;
+        }
+
+        #full .numpad-section {
+            width: 180px;
+            position: absolute;
+            right: 20px;
+            top: 80px;
+        }
+
+        /* 移除之前的内联高度和宽度样式 */
+        #full .numpad-section .key.tall {
+            height: 74px;
+        }
+
+        #full .numpad-section .key.wide {
+            width: 74px;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navSidebar = document.querySelector('.nav-sidebar');
+            const container = document.querySelector('.keyboard-container');
+            const navToggle = document.querySelector('.nav-toggle');
+
+            navToggle.addEventListener('click', function() {
+                navSidebar.classList.toggle('show');
+                container.classList.toggle('shift');
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="nav-sidebar">
+        <button class="nav-toggle"><i></i></button>
+        <ul>
+            <li><a href="#full">100% (104/108键)</a></li>
+            <li><a href="#ninetyfive">95% (98/96键)</a></li>
+            <li><a href="#tkl">80% (87键)</a></li>
+            <li><a href="#seventyfive">75% (84/86键)</a></li>
+            <li><a href="#sixtyfive">65% (68键)</a></li>
+            <li><a href="#sixty">60% (61键)</a></li>
+        </ul>
+    </div>
+    <div class="keyboard-container">
+        <!-- 100% Layout (104/108 keys) -->
+        <div id="full" class="keyboard">
+            <h2 class="layout-title">100% Layout (104/108 keys)</h2>
+            <div class="main-keys">
+                <!-- Function row -->
+                <div class="key-row">
+                    <div class="key">Esc</div>
+                    <div style="width: 20px; display: inline-block;"></div>
+                    <div class="key">F1</div>
+                    <div class="key">F2</div>
+                    <div class="key">F3</div>
+                    <div class="key">F4</div>
+                    <div style="width: 20px; display: inline-block;"></div>
+                    <div class="key">F5</div>
+                    <div class="key">F6</div>
+                    <div class="key">F7</div>
+                    <div class="key">F8</div>
+                    <div style="width: 20px; display: inline-block;"></div>
+                    <div class="key">F9</div>
+                    <div class="key">F10</div>
+                    <div class="key">F11</div>
+                    <div class="key">F12</div>
+                </div>
+                <!-- Number row -->
+                <div class="key-row">
+                    <div class="key">~</div>
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                    <div class="key">3</div>
+                    <div class="key">4</div>
+                    <div class="key">5</div>
+                    <div class="key">6</div>
+                    <div class="key">7</div>
+                    <div class="key">8</div>
+                    <div class="key">9</div>
+                    <div class="key">0</div>
+                    <div class="key">-</div>
+                    <div class="key">=</div>
+                    <div class="key wide">Backspace</div>
+                </div>
+                <!-- QWERTY row -->
+                <div class="key-row">
+                    <div class="key wide">Tab</div>
+                    <div class="key">Q</div>
+                    <div class="key">W</div>
+                    <div class="key">E</div>
+                    <div class="key">R</div>
+                    <div class="key">T</div>
+                    <div class="key">Y</div>
+                    <div class="key">U</div>
+                    <div class="key">I</div>
+                    <div class="key">O</div>
+                    <div class="key">P</div>
+                    <div class="key">[</div>
+                    <div class="key">]</div>
+                    <div class="key">\</div>
+                </div>
+                <!-- ASDF row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Caps Lock</div>
+                    <div class="key">A</div>
+                    <div class="key">S</div>
+                    <div class="key">D</div>
+                    <div class="key">F</div>
+                    <div class="key">G</div>
+                    <div class="key">H</div>
+                    <div class="key">J</div>
+                    <div class="key">K</div>
+                    <div class="key">L</div>
+                    <div class="key">;</div>
+                    <div class="key">'</div>
+                    <div class="key extra-wide">Enter</div>
+                </div>
+                <!-- ZXCV row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Shift</div>
+                    <div class="key">Z</div>
+                    <div class="key">X</div>
+                    <div class="key">C</div>
+                    <div class="key">V</div>
+                    <div class="key">B</div>
+                    <div class="key">N</div>
+                    <div class="key">M</div>
+                    <div class="key">,</div>
+                    <div class="key">.</div>
+                    <div class="key">/</div>
+                    <div class="key extra-wide">Shift</div>
+                </div>
+                <!-- Bottom row -->
+                <div class="key-row">
+                    <div class="key wide">Ctrl</div>
+                    <div class="key wide">Win</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key space">Space</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key wide">Win</div>
+                    <div class="key wide">Menu</div>
+                    <div class="key wide">Ctrl</div>
+                </div>
+            </div>
+
+            <!-- Control Section (Navigation + Arrows) -->
+            <div class="control-section">
+                <!-- Navigation cluster -->
+                <div class="key-row" style="justify-content: center; margin-bottom: 10px;">
+                    <div class="key">Print</div>
+                    <div class="key">Scroll</div>
+                    <div class="key">Pause</div>
+                </div>
+                <div class="key-row" style="justify-content: center;">
+                    <div class="key">Insert</div>
+                    <div class="key">Home</div>
+                    <div class="key">PgUp</div>
+                </div>
+                <div class="key-row" style="justify-content: center;">
+                    <div class="key">Delete</div>
+                    <div class="key">End</div>
+                    <div class="key">PgDn</div>
+                </div>
+                <!-- Arrow keys -->
+                <div class="key-row" style="justify-content: center; margin-top: 10px;">
+                    <div style="text-align: center;">
+                        <div class="key-row" style="justify-content: center;">
+                            <div class="key">↑</div>
+                        </div>
+                        <div class="key-row" style="justify-content: center;">
+                            <div class="key">←</div>
+                            <div class="key">↓</div>
+                            <div class="key">→</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Numpad -->
+            <div class="numpad-section">
+                <div class="key-row">
+                    <div class="key">Num</div>
+                    <div class="key">/</div>
+                    <div class="key">*</div>
+                    <div class="key">-</div>
+                </div>
+                <div class="key-row">
+                    <div class="key">7</div>
+                    <div class="key">8</div>
+                    <div class="key">9</div>
+                    <div class="key" style="height: 71px;">+</div>
+                </div>
+                <div class="key-row">
+                    <div class="key">4</div>
+                    <div class="key">5</div>
+                    <div class="key">6</div>
+                </div>
+                <div class="key-row">
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                    <div class="key">3</div>
+                    <div class="key" style="height: 71px;">Enter</div>
+                </div>
+                <div class="key-row">
+                    <div class="key" style="width: 71px;">0</div>
+                    <div class="key">.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 95% Layout (98/96 keys) -->
+        <div id="ninetyfive" class="keyboard night_six">
+            <h2 class="layout-title">95% Layout (98/96 keys)</h2>
+            <div class="main-keys">
+                <!-- Function row -->
+                <div class="key-row">
+                    <div class="key">Esc</div>
+                    <div style="width: 20px;"></div>
+                    <div class="key">F1</div>
+                    <div class="key">F2</div>
+                    <div class="key">F3</div>
+                    <div class="key">F4</div>
+                    <div style="width: 20px;"></div>
+                    <div class="key">F5</div>
+                    <div class="key">F6</div>
+                    <div class="key">F7</div>
+                    <div class="key">F8</div>
+                    <div style="width: 20px;"></div>
+                    <div class="key">F9</div>
+                    <div class="key">F10</div>
+                    <div class="key">F11</div>
+                    <div class="key">F12</div>
+                </div>
+                <!-- Number row -->
+                <div class="key-row">
+                    <div class="key">~</div>
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                    <div class="key">3</div>
+                    <div class="key">4</div>
+                    <div class="key">5</div>
+                    <div class="key">6</div>
+                    <div class="key">7</div>
+                    <div class="key">8</div>
+                    <div class="key">9</div>
+                    <div class="key">0</div>
+                    <div class="key">-</div>
+                    <div class="key">=</div>
+                    <div class="key wide">Backspace</div>
+                </div>
+                <!-- QWERTY row -->
+                <div class="key-row">
+                    <div class="key wide">Tab</div>
+                    <div class="key">Q</div>
+                    <div class="key">W</div>
+                    <div class="key">E</div>
+                    <div class="key">R</div>
+                    <div class="key">T</div>
+                    <div class="key">Y</div>
+                    <div class="key">U</div>
+                    <div class="key">I</div>
+                    <div class="key">O</div>
+                    <div class="key">P</div>
+                    <div class="key">[</div>
+                    <div class="key">]</div>
+                    <div class="key">\</div>
+                </div>
+                <!-- ASDF row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Caps Lock</div>
+                    <div class="key">A</div>
+                    <div class="key">S</div>
+                    <div class="key">D</div>
+                    <div class="key">F</div>
+                    <div class="key">G</div>
+                    <div class="key">H</div>
+                    <div class="key">J</div>
+                    <div class="key">K</div>
+                    <div class="key">L</div>
+                    <div class="key">;</div>
+                    <div class="key">'</div>
+                    <div class="key extra-wide">Enter</div>
+                </div>
+                <!-- ZXCV row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Shift</div>
+                    <div class="key">Z</div>
+                    <div class="key">X</div>
+                    <div class="key">C</div>
+                    <div class="key">V</div>
+                    <div class="key">B</div>
+                    <div class="key">N</div>
+                    <div class="key">M</div>
+                    <div class="key">,</div>
+                    <div class="key">.</div>
+                    <div class="key">/</div>
+                    <div class="key extra-wide">Shift</div>
+                </div>
+                <!-- Bottom row -->
+                <div class="key-row">
+                    <div class="key wide">Ctrl</div>
+                    <div class="key wide">Win</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key space">Space</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key wide">Win</div>
+                    <div class="key wide">Menu</div>
+                    <div class="key wide">Ctrl</div>
+                </div>
+            </div>
+
+            <!-- Numpad -->
+            <div class="numpad-section">
+                <div class="key-row">
+                    <div class="key">Num</div>
+                    <div class="key">/</div>
+                    <div class="key">*</div>
+                    <div class="key">-</div>
+                </div>
+                <div class="key-row">
+                    <div class="key">7</div>
+                    <div class="key">8</div>
+                    <div class="key">9</div>
+                    <div class="key" style="height: 71px;">+</div>
+                </div>
+                <div class="key-row">
+                    <div class="key">4</div>
+                    <div class="key">5</div>
+                    <div class="key">6</div>
+                </div>
+                <div class="key-row">
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                    <div class="key">3</div>
+                    <div class="key" style="height: 71px;">Enter</div>
+                </div>
+                <div class="key-row">
+                    <div class="key" style="width: 71px;">0</div>
+                    <div class="key">.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 80% Layout (87 keys) -->
+        <div id="tkl" class="keyboard tkl">
+            <h2 class="layout-title">80% Layout (87 keys)</h2>
+            <div class="main-keys">
+                <!-- Function row -->
+                <div class="key-row">
+                    <div class="key">Esc</div>
+                    <div style="width: 20px;"></div>
+                    <div class="key">F1</div>
+                    <div class="key">F2</div>
+                    <div class="key">F3</div>
+                    <div class="key">F4</div>
+                    <div style="width: 20px;"></div>
+                    <div class="key">F5</div>
+                    <div class="key">F6</div>
+                    <div class="key">F7</div>
+                    <div class="key">F8</div>
+                    <div style="width: 20px;"></div>
+                    <div class="key">F9</div>
+                    <div class="key">F10</div>
+                    <div class="key">F11</div>
+                    <div class="key">F12</div>
+                </div>
+                <!-- Number row -->
+                <div class="key-row">
+                    <div class="key">~</div>
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                    <div class="key">3</div>
+                    <div class="key">4</div>
+                    <div class="key">5</div>
+                    <div class="key">6</div>
+                    <div class="key">7</div>
+                    <div class="key">8</div>
+                    <div class="key">9</div>
+                    <div class="key">0</div>
+                    <div class="key">-</div>
+                    <div class="key">=</div>
+                    <div class="key wide">Backspace</div>
+                </div>
+                <!-- QWERTY row -->
+                <div class="key-row">
+                    <div class="key wide">Tab</div>
+                    <div class="key">Q</div>
+                    <div class="key">W</div>
+                    <div class="key">E</div>
+                    <div class="key">R</div>
+                    <div class="key">T</div>
+                    <div class="key">Y</div>
+                    <div class="key">U</div>
+                    <div class="key">I</div>
+                    <div class="key">O</div>
+                    <div class="key">P</div>
+                    <div class="key">[</div>
+                    <div class="key">]</div>
+                    <div class="key">\</div>
+                </div>
+                <!-- ASDF row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Caps Lock</div>
+                    <div class="key">A</div>
+                    <div class="key">S</div>
+                    <div class="key">D</div>
+                    <div class="key">F</div>
+                    <div class="key">G</div>
+                    <div class="key">H</div>
+                    <div class="key">J</div>
+                    <div class="key">K</div>
+                    <div class="key">L</div>
+                    <div class="key">;</div>
+                    <div class="key">'</div>
+                    <div class="key extra-wide">Enter</div>
+                </div>
+                <!-- ZXCV row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Shift</div>
+                    <div class="key">Z</div>
+                    <div class="key">X</div>
+                    <div class="key">C</div>
+                    <div class="key">V</div>
+                    <div class="key">B</div>
+                    <div class="key">N</div>
+                    <div class="key">M</div>
+                    <div class="key">,</div>
+                    <div class="key">.</div>
+                    <div class="key">/</div>
+                    <div class="key extra-wide">Shift</div>
+                </div>
+                <!-- Bottom row -->
+                <div class="key-row">
+                    <div class="key wide">Ctrl</div>
+                    <div class="key wide">Win</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key space">Space</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key wide">Win</div>
+                    <div class="key wide">Menu</div>
+                    <div class="key wide">Ctrl</div>
+                </div>
+            </div>
+
+            <!-- Control Section -->
+            <div class="control-section">
+                <!-- Navigation cluster -->
+                <div class="key-row" style="justify-content: center; margin-bottom: 10px;">
+                    <div class="key">Print</div>
+                    <div class="key">Scroll</div>
+                    <div class="key">Pause</div>
+                </div>
+                <div class="key-row" style="justify-content: center;">
+                    <div class="key">Insert</div>
+                    <div class="key">Home</div>
+                    <div class="key">PgUp</div>
+                </div>
+                <div class="key-row" style="justify-content: center;">
+                    <div class="key">Delete</div>
+                    <div class="key">End</div>
+                    <div class="key">PgDn</div>
+                </div>
+                <!-- Arrow keys -->
+                <div class="key-row" style="justify-content: center; margin-top: 10px;">
+                    <div style="text-align: center;">
+                        <div class="key-row" style="justify-content: center;">
+                            <div class="key">↑</div>
+                        </div>
+                        <div class="key-row" style="justify-content: center;">
+                            <div class="key">←</div>
+                            <div class="key">↓</div>
+                            <div class="key">→</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 75% Layout (84/86 keys) -->
+        <div id="seventyfive" class="keyboard seventyfive">
+            <h2 class="layout-title">75% Layout (84/86 keys)</h2>
+            <div class="main-keys">
+                <!-- Function row -->
+                <div class="key-row">
+                    <div class="key">Esc</div>
+                    <div class="key">F1</div>
+                    <div class="key">F2</div>
+                    <div class="key">F3</div>
+                    <div class="key">F4</div>
+                    <div class="key">F5</div>
+                    <div class="key">F6</div>
+                    <div class="key">F7</div>
+                    <div class="key">F8</div>
+                    <div class="key">F9</div>
+                    <div class="key">F10</div>
+                    <div class="key">F11</div>
+                    <div class="key">F12</div>
+                    <div class="key">Del</div>
+                </div>
+                <!-- Number row -->
+                <div class="key-row">
+                    <div class="key">~</div>
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                    <div class="key">3</div>
+                    <div class="key">4</div>
+                    <div class="key">5</div>
+                    <div class="key">6</div>
+                    <div class="key">7</div>
+                    <div class="key">8</div>
+                    <div class="key">9</div>
+                    <div class="key">0</div>
+                    <div class="key">-</div>
+                    <div class="key">=</div>
+                    <div class="key wide">Backspace</div>
+                </div>
+                <!-- QWERTY row -->
+                <div class="key-row">
+                    <div class="key wide">Tab</div>
+                    <div class="key">Q</div>
+                    <div class="key">W</div>
+                    <div class="key">E</div>
+                    <div class="key">R</div>
+                    <div class="key">T</div>
+                    <div class="key">Y</div>
+                    <div class="key">U</div>
+                    <div class="key">I</div>
+                    <div class="key">O</div>
+                    <div class="key">P</div>
+                    <div class="key">[</div>
+                    <div class="key">]</div>
+                    <div class="key">\</div>
+                    <div class="key">PgUp</div>
+                </div>
+                <!-- ASDF row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Caps Lock</div>
+                    <div class="key">A</div>
+                    <div class="key">S</div>
+                    <div class="key">D</div>
+                    <div class="key">F</div>
+                    <div class="key">G</div>
+                    <div class="key">H</div>
+                    <div class="key">J</div>
+                    <div class="key">K</div>
+                    <div class="key">L</div>
+                    <div class="key">;</div>
+                    <div class="key">'</div>
+                    <div class="key extra-wide">Enter</div>
+                    <div class="key">PgDn</div>
+                </div>
+                <!-- ZXCV row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Shift</div>
+                    <div class="key">Z</div>
+                    <div class="key">X</div>
+                    <div class="key">C</div>
+                    <div class="key">V</div>
+                    <div class="key">B</div>
+                    <div class="key">N</div>
+                    <div class="key">M</div>
+                    <div class="key">,</div>
+                    <div class="key">.</div>
+                    <div class="key">/</div>
+                    <div class="key wide">Shift</div>
+                    <div class="key">↑</div>
+                    <div class="key">End</div>
+                </div>
+                <!-- Bottom row -->
+                <div class="key-row">
+                    <div class="key wide">Ctrl</div>
+                    <div class="key wide">Win</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key space">Space</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key wide">Fn</div>
+                    <div class="key">←</div>
+                    <div class="key">↓</div>
+                    <div class="key">→</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 65% Layout (68 keys) -->
+        <div id="sixtyfive" class="keyboard sixtyfive">
+            <h2 class="layout-title">65% Layout (68 keys)</h2>
+            <div class="main-keys">
+                <!-- Number row -->
+                <div class="key-row">
+                    <div class="key">~</div>
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                    <div class="key">3</div>
+                    <div class="key">4</div>
+                    <div class="key">5</div>
+                    <div class="key">6</div>
+                    <div class="key">7</div>
+                    <div class="key">8</div>
+                    <div class="key">9</div>
+                    <div class="key">0</div>
+                    <div class="key">-</div>
+                    <div class="key">=</div>
+                    <div class="key wide">Backspace</div>
+                    <div class="key">Del</div>
+                </div>
+                <!-- QWERTY row -->
+                <div class="key-row">
+                    <div class="key wide">Tab</div>
+                    <div class="key">Q</div>
+                    <div class="key">W</div>
+                    <div class="key">E</div>
+                    <div class="key">R</div>
+                    <div class="key">T</div>
+                    <div class="key">Y</div>
+                    <div class="key">U</div>
+                    <div class="key">I</div>
+                    <div class="key">O</div>
+                    <div class="key">P</div>
+                    <div class="key">[</div>
+                    <div class="key">]</div>
+                    <div class="key">\</div>
+                    <div class="key">PgUp</div>
+                </div>
+                <!-- ASDF row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Caps Lock</div>
+                    <div class="key">A</div>
+                    <div class="key">S</div>
+                    <div class="key">D</div>
+                    <div class="key">F</div>
+                    <div class="key">G</div>
+                    <div class="key">H</div>
+                    <div class="key">J</div>
+                    <div class="key">K</div>
+                    <div class="key">L</div>
+                    <div class="key">;</div>
+                    <div class="key">'</div>
+                    <div class="key extra-wide">Enter</div>
+                    <div class="key">PgDn</div>
+                </div>
+                <!-- ZXCV row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Shift</div>
+                    <div class="key">Z</div>
+                    <div class="key">X</div>
+                    <div class="key">C</div>
+                    <div class="key">V</div>
+                    <div class="key">B</div>
+                    <div class="key">N</div>
+                    <div class="key">M</div>
+                    <div class="key">,</div>
+                    <div class="key">.</div>
+                    <div class="key">/</div>
+                    <div class="key wide">Shift</div>
+                    <div class="key">↑</div>
+                    <div class="key">End</div>
+                </div>
+                <!-- Bottom row -->
+                <div class="key-row">
+                    <div class="key wide">Ctrl</div>
+                    <div class="key wide">Win</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key space">Space</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key wide">Fn</div>
+                    <div class="key">←</div>
+                    <div class="key">↓</div>
+                    <div class="key">→</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 60% Layout (61 keys) -->
+        <div id="sixty" class="keyboard compact">
+            <h2 class="layout-title">60% Layout (61 keys)</h2>
+            <div class="main-keys">
+                <!-- Number row -->
+                <div class="key-row">
+                    <div class="key">~</div>
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                    <div class="key">3</div>
+                    <div class="key">4</div>
+                    <div class="key">5</div>
+                    <div class="key">6</div>
+                    <div class="key">7</div>
+                    <div class="key">8</div>
+                    <div class="key">9</div>
+                    <div class="key">0</div>
+                    <div class="key">-</div>
+                    <div class="key">=</div>
+                    <div class="key wide">Backspace</div>
+                </div>
+                <!-- QWERTY row -->
+                <div class="key-row">
+                    <div class="key wide">Tab</div>
+                    <div class="key">Q</div>
+                    <div class="key">W</div>
+                    <div class="key">E</div>
+                    <div class="key">R</div>
+                    <div class="key">T</div>
+                    <div class="key">Y</div>
+                    <div class="key">U</div>
+                    <div class="key">I</div>
+                    <div class="key">O</div>
+                    <div class="key">P</div>
+                    <div class="key">[</div>
+                    <div class="key">]</div>
+                    <div class="key">\</div>
+                </div>
+                <!-- ASDF row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Caps Lock</div>
+                    <div class="key">A</div>
+                    <div class="key">S</div>
+                    <div class="key">D</div>
+                    <div class="key">F</div>
+                    <div class="key">G</div>
+                    <div class="key">H</div>
+                    <div class="key">J</div>
+                    <div class="key">K</div>
+                    <div class="key">L</div>
+                    <div class="key">;</div>
+                    <div class="key">'</div>
+                    <div class="key extra-wide">Enter</div>
+                </div>
+                <!-- ZXCV row -->
+                <div class="key-row">
+                    <div class="key extra-wide">Shift</div>
+                    <div class="key">Z</div>
+                    <div class="key">X</div>
+                    <div class="key">C</div>
+                    <div class="key">V</div>
+                    <div class="key">B</div>
+                    <div class="key">N</div>
+                    <div class="key">M</div>
+                    <div class="key">,</div>
+                    <div class="key">.</div>
+                    <div class="key">/</div>
+                    <div class="key extra-wide">Shift</div>
+                </div>
+                <!-- Bottom row -->
+                <div class="key-row">
+                    <div class="key wide">Ctrl</div>
+                    <div class="key wide">Win</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key space">Space</div>
+                    <div class="key wide">Alt</div>
+                    <div class="key wide">Win</div>
+                    <div class="key wide">Fn</div>
+                    <div class="key wide">Ctrl</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
