@@ -22,7 +22,7 @@
             background: #e0e0e0;
             border-radius: 5px;
             padding: 20px;
-            margin-bottom: 30px;
+            margin: 30px auto !important;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             position: relative;
             min-height: 400px;
@@ -100,51 +100,36 @@
             width: 180px;
         }
 
-        .keyboard.compact {
-            max-width: 800px;
-            margin: 0 auto;
+        .keyboard.compact,
+        .keyboard.sixtyfive,
+        .keyboard.seventyfive,
+        .keyboard.tkl,
+        .keyboard.night_six {
+            margin: 30px auto !important;
         }
-        
+
         .keyboard.compact .main-keys {
             width: 100%;
             margin-right: 0;
         }
 
-        .keyboard.sixtyfive {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        
         .keyboard.sixtyfive .main-keys {
             width: 100%;
             margin-right: 0;
         }
 
-        .keyboard.seventyfive {
-            max-width: 950px;
-            margin: 0 auto;
-        }
-        
         .keyboard.seventyfive .main-keys {
             width: 100%;
             margin-right: 0;
         }
 
-        .keyboard.tkl {
-            max-width: 1000px;
-            margin: 0 auto;
-            position: relative;
-            text-align: left;
-            padding: 20px 20px 20px 40px;
-        }
-        
         .keyboard.tkl .main-keys {
             width: 700px;
             display: inline-block;
             vertical-align: top;
             margin-right: 0;
         }
-
+        
         .keyboard.tkl .control-section {
             position: absolute;
             right: 40px;
@@ -153,13 +138,6 @@
             margin: 0;
         }
 
-        .keyboard.night_six {
-            max-width: 1100px;
-            margin: 0 auto;
-            position: relative;
-            padding: 20px;
-        }
-        
         .keyboard.night_six .main-keys {
             width: 750px;
             display: inline-block;
@@ -168,17 +146,16 @@
 
         .keyboard.night_six .numpad-section {
             display: inline-block;
-            vertical-align: top;
             width: 200px;
-            margin-left: 20px;
+            margin-left: 80px;
         }
 
         .keyboard:first-child {
-            margin-top: 0;
+            margin-top: 10px !important;
         }
 
         .keyboard:last-child {
-            margin-bottom: 0;
+            margin-bottom: 10px !important;
         }
 
         /* 导航条样式 */
