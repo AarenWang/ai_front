@@ -286,6 +286,28 @@
             100% { transform: translateY(1000px) rotateZ(720deg); opacity: 0; }
         }
 
+        /* 添加机器人按钮样式 */
+        .robot-btn {
+            background-color: #2196F3 !important;  /* 使用蓝色区分 */
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .robot-btn:hover {
+            background-color: #1976D2 !important;
+        }
+
+        .robot-btn.playing {
+            background-color: #666 !important;
+            cursor: not-allowed;
+        }
+
+        /* 添加机器人图标样式 */
+        .robot-icon {
+            font-size: 20px;
+        }
+
     </style>
 </head>
 <body>
@@ -297,6 +319,9 @@
             <button onclick="newGame()">新游戏</button>
             <button onclick="checkSolution()">检查</button>
             <button onclick="showHint()">提示</button>
+            <button class="robot-btn" id="robotBtn" onclick="toggleRobot()">
+                <span class="robot-icon">🤖</span>机器人通关
+            </button>
         </div>
         <div class="timer" id="timer">00:00:00</div>
         <div class="timer-controls">
@@ -324,6 +349,8 @@
         let startTime;
         let isTimerRunning = false;
         let isPaused = false;
+        let isRobotPlaying = false;
+        let robotInterval;
 
         function generatePuzzle() {
             // 创建1-9的随机排列
@@ -563,6 +590,10 @@
         }
 
         function newGame() {
+            stopRobot();
+            const robotBtn = document.getElementById('robotBtn');
+            robotBtn.classList.remove('playing');
+            robotBtn.innerHTML = '<span class="robot-icon">🤖</span>机器人通关';
             generatePuzzle();
             createBoard();
             resetTimer();
@@ -641,6 +672,10 @@
 
         function pauseGame() {
             if (isTimerRunning && !isPaused) {
+                stopRobot();
+                const robotBtn = document.getElementById('robotBtn');
+                robotBtn.classList.remove('playing');
+                robotBtn.innerHTML = '<span class="robot-icon">🤖</span>机器人通关';
                 stopTimer();
                 isPaused = true;
                 document.getElementById('timer').classList.add('paused');
@@ -702,6 +737,73 @@
                 confetti.addEventListener('animationend', () => {
                     confetti.remove();
                 });
+            }
+        }
+
+        function toggleRobot() {
+            const robotBtn = document.getElementById('robotBtn');
+            if (!isRobotPlaying) {
+                startRobot();
+                robotBtn.classList.add('playing');
+                robotBtn.innerHTML = '<span class="robot-icon">🤖</span>停止机器人';
+            } else {
+                stopRobot();
+                robotBtn.classList.remove('playing');
+                robotBtn.innerHTML = '<span class="robot-icon">🤖</span>机器人通关';
+            }
+        }
+
+        function startRobot() {
+            if (!isRobotPlaying) {
+                isRobotPlaying = true;
+                robotPlay();
+            }
+        }
+
+        function stopRobot() {
+            isRobotPlaying = false;
+            if (robotInterval) {
+                clearTimeout(robotInterval);
+            }
+        }
+
+        function robotPlay() {
+            if (!isRobotPlaying) return;
+
+            const cells = document.querySelectorAll('.cell');
+            let moved = false;
+
+            // 遍历所有单元格
+            for (let index = 0; index < cells.length; index++) {
+                const cell = cells[index];
+                if (!cell.classList.contains('fixed') && !cell.textContent) {
+                    const row = Math.floor(index / 9);
+                    const col = index % 9;
+                    const correctNumber = solution[row][col];
+
+                    // 选择单元格
+                    selectCell(cell, row, col);
+                    
+                    // 延迟1秒填入数字
+                    robotInterval = setTimeout(() => {
+                        if (isRobotPlaying) {
+                            fillNumber(correctNumber);
+                            // 继续下一步
+                            robotPlay();
+                        }
+                    }, 1000);
+
+                    moved = true;
+                    break;
+                }
+            }
+
+            // 如果没有空格子了，停止机器人
+            if (!moved) {
+                stopRobot();
+                const robotBtn = document.getElementById('robotBtn');
+                robotBtn.classList.remove('playing');
+                robotBtn.innerHTML = '<span class="robot-icon">🤖</span>机器人通关';
             }
         }
 
