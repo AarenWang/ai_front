@@ -215,6 +215,77 @@
             }
         }
 
+        /* 添加模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .modal {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal h2 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+
+        .modal p {
+            font-size: 1.2em;
+            margin: 15px 0;
+        }
+
+        .modal .time {
+            font-size: 2em;
+            color: #4CAF50;
+            font-weight: bold;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+
+        .modal button {
+            margin-top: 20px;
+            padding: 10px 25px;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: confetti 3s ease-in infinite;
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotateZ(0deg); opacity: 1; }
+            100% { transform: translateY(1000px) rotateZ(720deg); opacity: 0; }
+        }
+
     </style>
 </head>
 <body>
@@ -231,6 +302,17 @@
         <div class="timer-controls">
             <button class="timer-btn pause" id="pauseBtn" onclick="pauseGame()">暂停</button>
             <button class="timer-btn resume" id="resumeBtn" onclick="resumeGame()">继续</button>
+        </div>
+    </div>
+
+    <!-- 添加模态框HTML -->
+    <div class="modal-overlay" id="completionModal">
+        <div class="modal">
+            <h2>🎉 恭喜完成！</h2>
+            <p>你已成功解开数独谜题</p>
+            <p>完成用时：</p>
+            <div class="time" id="completionTime">00:00:00</div>
+            <button onclick="startNewGame()">开始新游戏</button>
         </div>
     </div>
 
@@ -416,6 +498,20 @@
                 if(num === solution[row][col]) {
                     selectedCell.textContent = num;
                     selectedCell.classList.remove('error');
+                    
+                    // 检查是否所有格子都已填满且正确
+                    const cells = document.querySelectorAll('.cell');
+                    let allFilled = true;
+                    cells.forEach(cell => {
+                        if (!cell.textContent) {
+                            allFilled = false;
+                        }
+                    });
+                    
+                    // 如果所有格子都已填满，自动检查解答
+                    if (allFilled) {
+                        checkSolution();
+                    }
                 } else {
                     selectedCell.textContent = num;
                     selectedCell.classList.add('error');
@@ -441,7 +537,28 @@
             });
 
             if(isCorrect) {
-                alert('恭喜你完成了数独！');
+                // 停止计时器
+                stopTimer();
+                const finalTime = document.getElementById('timer').textContent;
+                
+                // 显示完成模态框
+                document.getElementById('completionTime').textContent = finalTime;
+                document.getElementById('completionModal').style.display = 'flex';
+                
+                // 添加庆祝动画效果
+                createConfetti();
+                
+                // 禁用所有输入
+                const numberBtns = document.querySelectorAll('.number-btn');
+                numberBtns.forEach(btn => btn.disabled = true);
+                const cells = document.querySelectorAll('.cell:not(.fixed)');
+                cells.forEach(cell => {
+                    cell.style.pointerEvents = 'none';
+                });
+                
+                // 隐藏暂停/继续按钮
+                document.getElementById('pauseBtn').style.display = 'none';
+                document.getElementById('resumeBtn').style.display = 'none';
             }
         }
 
@@ -556,6 +673,34 @@
                 cells.forEach(cell => {
                     cell.style.pointerEvents = 'auto';
                     cell.style.opacity = '1';
+                });
+            }
+        }
+
+        // 添加开始新游戏的函数
+        function startNewGame() {
+            document.getElementById('completionModal').style.display = 'none';
+            newGame();
+        }
+
+        // 添加五彩纸屑效果
+        function createConfetti() {
+            const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff'];
+            const confettiCount = 50;
+            const container = document.getElementById('completionModal');
+            
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                confetti.style.opacity = Math.random();
+                container.appendChild(confetti);
+                
+                // 动画结束后移除元素
+                confetti.addEventListener('animationend', () => {
+                    confetti.remove();
                 });
             }
         }
