@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .multiplication-table {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 2px;
+            max-width: 900px;
+            margin: 40px auto;
+            background-color: #FFE4E8;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(255, 182, 193, 0.3);
+        }
+
+        .cell {
+            background-color: #FFF0F5;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #FF69B4;
+            transition: all 0.3s ease;
+            font-family: "Comic Sans MS", cursive;
+        }
+
+        .cell:hover {
+            background-color: #FFB6C1;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255, 182, 193, 0.5);
+        }
+
+        .header {
+            background-color: #FF69B4;
+            color: white;
+            font-weight: bold;
+        }
+
+        h1 {
+            text-align: center;
+            color: #FF69B4;
+            font-family: "Comic Sans MS", cursive;
+            text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
+            margin-bottom: 20px;
+        }
+
+        body {
+            background-color: #FFF5F6;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>✨ 乘法口诀表 ✨</h1>
+    <div class="multiplication-table">
+        <script>
+            // 添加表头
+            for (let i = 1; i <= 9; i++) {
+                document.write(`<div class="cell header">${i}</div>`);
+            }
+            
+            // 生成乘法表
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 1; j <= 9; j++) {
+                    if (j >= i) {
+                        document.write(`<div class="cell">${i}×${j}=${i*j}</div>`);
+                    } else {
+                        document.write(`<div class="cell"></div>`);
+                    }
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>
