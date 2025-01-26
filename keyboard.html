@@ -173,8 +173,12 @@
             margin-left: 20px;
         }
 
+        .keyboard:first-child {
+            margin-top: 0;
+        }
+
         .keyboard:last-child {
-            margin-bottom: 30px;
+            margin-bottom: 0;
         }
 
         /* 导航条样式 */
@@ -286,6 +290,15 @@
         #full .numpad-section .key.wide {
             width: 74px;
         }
+
+        /* 添加高亮样式 */
+        .key.highlight {
+            background-color: #4CAF50;
+            color: white;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+            transform: scale(1.1);
+            transition: all 0.1s ease;
+        }
     </style>
 
     <script>
@@ -297,6 +310,50 @@
             navToggle.addEventListener('click', function() {
                 navSidebar.classList.toggle('show');
                 container.classList.toggle('shift');
+            });
+
+            // 添加键盘事件监听
+            document.addEventListener('keydown', function(event) {
+                // 获取按下的键
+                let key = event.key.toUpperCase();
+                
+                // 如果是数字键，需要处理Shift键的特殊字符
+                if (event.shiftKey && event.key >= '0' && event.key <= '9') {
+                    const specialChars = {
+                        '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
+                        '6': '^', '7': '&', '8': '*', '9': '(', '0': ')'
+                    };
+                    key = specialChars[event.key] || key;
+                }
+
+                // 查找所有匹配的键
+                const keys = document.querySelectorAll('.key');
+                keys.forEach(keyElement => {
+                    if (keyElement.textContent.toUpperCase() === key) {
+                        keyElement.classList.add('highlight');
+                    }
+                });
+            });
+
+            // 按键释放时移除高亮
+            document.addEventListener('keyup', function(event) {
+                let key = event.key.toUpperCase();
+                
+                // 处理Shift键的特殊字符
+                if (event.shiftKey && event.key >= '0' && event.key <= '9') {
+                    const specialChars = {
+                        '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
+                        '6': '^', '7': '&', '8': '*', '9': '(', '0': ')'
+                    };
+                    key = specialChars[event.key] || key;
+                }
+
+                const keys = document.querySelectorAll('.key');
+                keys.forEach(keyElement => {
+                    if (keyElement.textContent.toUpperCase() === key) {
+                        keyElement.classList.remove('highlight');
+                    }
+                });
             });
         });
     </script>
