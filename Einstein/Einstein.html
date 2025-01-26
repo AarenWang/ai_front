@@ -434,45 +434,51 @@
                 }
                 return "无法放置英国人和红色房子";
             }},
-            { text: "5. 瑞典人养狗", apply: () => {
-                const emptyHouse = houses.find(h => h.nationality === null);
-                emptyHouse.nationality = "瑞典人";
-                emptyHouse.pet = "狗";
-                return "瑞典人养狗";
+            { text: "5. 丹麦人喝茶", apply: () => {
+                const availableHouse = houses.find(h => 
+                    h.nationality === null && h.drink === null && 
+                    h.color !== '绿色' // 绿色房子必须喝咖啡，所以丹麦人不能住在绿色房子里
+                );
+                if (availableHouse) {
+                    availableHouse.nationality = "丹麦人";
+                    availableHouse.drink = "茶";
+                    return "丹麦人住在这里，喝茶";
+                }
+                return "无法安排丹麦人和茶";
             }},
-            { text: "6. 丹麦人喝茶", apply: () => {
-                const emptyHouse = houses.find(h => h.nationality === null);
-                emptyHouse.nationality = "丹麦人";
-                emptyHouse.drink = "茶";
-                return "丹麦人喝茶";
-            }},
-            { text: "7. 绿房子在白色房子的左边", apply: () => {
+            { text: "6. 绿色房子在白色房子的左边", apply: () => {
                 for(let i = 0; i < 4; i++) {
-                    if(houses[i].color === null && houses[i+1].color === null) {
+                    if(houses[i].color === null && houses[i+1].color === null &&
+                       houses[i].drink === null && // 确保绿色房子可以喝咖啡
+                       (!houses[i].nationality || houses[i].nationality !== '丹麦人')) { // 确保不是丹麦人的房子
                         houses[i].color = "绿色";
                         houses[i+1].color = "白色";
                         return `绿色房子在第${i+1}位，白色房子在第${i+2}位`;
                     }
                 }
+                return "无法安排绿色和白色房子";
             }},
-            { text: "8. 绿房子的主人喝咖啡", apply: () => {
+            { text: "7. 绿房子的主人喝咖啡", apply: () => {
                 const greenHouse = houses.find(h => h.color === "绿色");
-                greenHouse.drink = "咖啡";
-                return "绿房子的主人喝咖啡";
+                if (greenHouse && greenHouse.drink === null) {
+                    greenHouse.drink = "咖啡";
+                    return "绿房子的主人喝咖啡";
+                }
+                return "无法安排咖啡";
             }},
-            { text: "9. 抽Pall Mall香烟的人养鸟", apply: () => {
+            { text: "8. 抽Pall Mall香烟的人养鸟", apply: () => {
                 const emptyHouse = houses.find(h => h.smoke === null && h.pet === null);
                 emptyHouse.smoke = "Pall Mall";
                 emptyHouse.pet = "鸟";
                 return "找到抽Pall Mall香烟的人，他养鸟";
             }},
-            { text: "10. 黄色房子的主人抽Dunhill香烟", apply: () => {
+            { text: "9. 黄色房子的主人抽Dunhill香烟", apply: () => {
                 const emptyHouse = houses.find(h => h.color === null);
                 emptyHouse.color = "黄色";
                 emptyHouse.smoke = "Dunhill";
                 return "黄色房子的主人抽Dunhill香烟";
             }},
-            { text: "11. 抽Blend香烟的人住在养猫的人旁边", apply: () => {
+            { text: "10. 抽Blend香烟的人住在养猫的人旁边", apply: () => {
                 for(let i = 0; i < 4; i++) {
                     if(houses[i].smoke === null && houses[i+1].pet === null) {
                         houses[i].smoke = "Blend";
@@ -481,7 +487,7 @@
                     }
                 }
             }},
-            { text: "12. 养马的人住在抽Dunhill烟的人旁边", apply: () => {
+            { text: "11. 养马的人住在抽Dunhill烟的人旁边", apply: () => {
                 const dunhillHouse = houses.find(h => h.smoke === "Dunhill");
                 const index = houses.indexOf(dunhillHouse);
                 if(index > 0 && houses[index-1].pet === null) {
@@ -492,19 +498,19 @@
                     return `在Dunhill烟者右边的人养马`;
                 }
             }},
-            { text: "13. 抽Blue Master烟的人喝啤酒", apply: () => {
+            { text: "12. 抽Blue Master烟的人喝啤酒", apply: () => {
                 const emptyHouse = houses.find(h => h.smoke === null && h.drink === null);
                 emptyHouse.smoke = "Blue Master";
                 emptyHouse.drink = "啤酒";
                 return "抽Blue Master烟的人喝啤酒";
             }},
-            { text: "14. 德国人抽Prince香烟", apply: () => {
+            { text: "13. 德国人抽Prince香烟", apply: () => {
                 const emptyHouse = houses.find(h => h.nationality === null);
                 emptyHouse.nationality = "德国人";
                 emptyHouse.smoke = "Prince";
                 return "德国人抽Prince香烟";
             }},
-            { text: "15. 抽Blend烟的人住在喝水的人旁边", apply: () => {
+            { text: "14. 抽Blend烟的人住在喝水的人旁边", apply: () => {
                 const blendHouse = houses.find(h => h.smoke === "Blend");
                 const index = houses.indexOf(blendHouse);
                 if(index > 0 && houses[index-1].drink === null) {
@@ -515,7 +521,7 @@
                     return "Blend烟者右边的人喝水";
                 }
             }},
-            { text: "最终问题：谁养鱼？", apply: () => {
+            { text: "15. 最终问题：谁养鱼？", apply: () => {
                 const fishOwner = houses.find(h => h.pet === null);
                 fishOwner.pet = "鱼";
                 return `解谜完成！${fishOwner.nationality}养鱼。`;
@@ -758,39 +764,36 @@
                         detailedExplanation = "根据线索，英国人住在红色房子里。注意：由于第一间房子已经住了挪威人，所以英国人不能住在第一间房子。";
                         break;
                     case 4:
-                        detailedExplanation = "根据线索，瑞典人养狗。我们需要找到一个还没有确定国籍的房子来安置瑞典人。";
-                        break;
-                    case 5:
                         detailedExplanation = "根据线索，丹麦人喝茶。需要找到一个还没有确定国籍和饮品的房子。";
                         break;
-                    case 6:
+                    case 5:
                         detailedExplanation = "根据线索，绿色房子必须在白色房子的左边。这意味着绿色房子不能在最后一个位置，白色房子不能在第一个位置。";
                         break;
-                    case 7:
+                    case 6:
                         detailedExplanation = "根据线索，绿房子的主人喝咖啡。找到绿色房子并确定其饮品为咖啡。";
                         break;
-                    case 8:
+                    case 7:
                         detailedExplanation = "根据线索，抽Pall Mall香烟的人养鸟。需要找到一个还没有确定香烟和宠物的房子。";
                         break;
-                    case 9:
+                    case 8:
                         detailedExplanation = "根据线索，黄色房子的主人抽Dunhill香烟。需要找到一个还没有确定颜色和香烟的房子。";
                         break;
-                    case 10:
+                    case 9:
                         detailedExplanation = "根据线索，抽Blend香烟的人住在养猫的人旁边。这是一个相邻关系的约束。";
                         break;
-                    case 11:
+                    case 10:
                         detailedExplanation = "根据线索，养马的人住在抽Dunhill烟的人旁边。找到抽Dunhill烟的房子，然后在其相邻位置安排养马的人。";
                         break;
-                    case 12:
+                    case 11:
                         detailedExplanation = "根据线索，抽Blue Master烟的人喝啤酒。需要找到一个还没有确定香烟和饮品的房子。";
                         break;
-                    case 13:
+                    case 12:
                         detailedExplanation = "根据线索，德国人抽Prince香烟。需要找到最后一个还没有确定国籍的房子。";
                         break;
-                    case 14:
+                    case 13:
                         detailedExplanation = "根据线索，抽Blend烟的人住在喝水的人旁边。找到抽Blend烟的房子，然后在其相邻位置安排喝水的人。";
                         break;
-                    case 15:
+                    case 14:
                         detailedExplanation = "最后一步：找到还没有确定宠物的房子，那个人一定养鱼。";
                         break;
                 }
@@ -1065,6 +1068,23 @@
                 }
             }
 
+            // 添加丹麦人和茶的关联验证
+            if (prop === 'nationality' && value === '丹麦人') {
+                if (house.drink !== null && house.drink !== '茶') return false;
+                if (house.color === '绿色') return false; // 丹麦人不能住在绿色房子里（因为绿色房子喝咖啡）
+            }
+            if (prop === 'drink' && value === '茶') {
+                if (house.nationality !== null && house.nationality !== '丹麦人') return false;
+            }
+            if (prop === 'drink' && value === '咖啡') {
+                if (house.color !== null && house.color !== '绿色') return false;
+                if (house.nationality === '丹麦人') return false; // 丹麦人不能喝咖啡
+            }
+            if (prop === 'color' && value === '绿色') {
+                if (house.drink !== null && house.drink !== '咖啡') return false;
+                if (house.nationality === '丹麦人') return false; // 绿色房子不能是丹麦人的
+            }
+
             // 6. 检查是否会导致其他位置无解
             const tempHouses = JSON.parse(JSON.stringify(houses));
             tempHouses[houseIndex][prop] = value;
@@ -1273,6 +1293,23 @@
                     if (house[relation.prop1] !== null && house[relation.prop1] !== relation.value1) 
                         return { isValid: false, message: relation.message };
                 }
+            }
+
+            // 添加丹麦人和茶的关联验证
+            if (prop === 'nationality' && value === '丹麦人') {
+                if (house.drink !== null && house.drink !== '茶') return false;
+                if (house.color === '绿色') return false; // 丹麦人不能住在绿色房子里（因为绿色房子喝咖啡）
+            }
+            if (prop === 'drink' && value === '茶') {
+                if (house.nationality !== null && house.nationality !== '丹麦人') return false;
+            }
+            if (prop === 'drink' && value === '咖啡') {
+                if (house.color !== null && house.color !== '绿色') return false;
+                if (house.nationality === '丹麦人') return false; // 丹麦人不能喝咖啡
+            }
+            if (prop === 'color' && value === '绿色') {
+                if (house.drink !== null && house.drink !== '咖啡') return false;
+                if (house.nationality === '丹麦人') return false; // 绿色房子不能是丹麦人的
             }
 
             return { isValid: true };
