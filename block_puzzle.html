@@ -820,11 +820,23 @@
             const oldShape = piece.shape;
             const newShape = rotatePieceShape(oldShape);
             
-            // 临时清除当前方块，但保存状态
+            // 先检查新位置是否可用（临时清除当前方块以进行检查）
             const tempBoard = board.map(row => [...row]);
-            clearPieceFromBoard(startRow, startCol, oldShape);
+            for (let i = 0; i < oldShape.length; i++) {
+                for (let j = 0; j < oldShape[0].length; j++) {
+                    if (oldShape[i][j]) {
+                        const currentRow = startRow + i;
+                        const currentCol = startCol + j;
+                        if (currentRow < 8 && currentCol < 8) {
+                            board[currentRow][currentCol] = null;
+                        }
+                    }
+                }
+            }
             
             if (canPlacePiece(startRow, startCol, newShape)) {
+                // 如果可以旋转，才清除原来的方块
+                clearPieceFromBoard(startRow, startCol, oldShape);
                 piece.shape = newShape;
                 placePiece(startRow, startCol, newShape, piece.color, piece);
                 // 添加到历史记录
@@ -839,20 +851,7 @@
                 });
             } else {
                 // 如果不能旋转，恢复原状
-                piece.shape = oldShape;
-                board = tempBoard.map(row => [...row]);
-                for (let i = 0; i < 8; i++) {
-                    for (let j = 0; j < 8; j++) {
-                        const cell = document.querySelector(`.cell[data-row="${i}"][data-col="${j}"]`);
-                        if (board[i][j]) {
-                            cell.classList.add('filled');
-                            cell.style.backgroundColor = board[i][j].color;
-                        } else {
-                            cell.classList.remove('filled');
-                            cell.style.backgroundColor = '';
-                        }
-                    }
-                }
+                board = tempBoard;
             }
         }
 
