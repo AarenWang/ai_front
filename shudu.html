@@ -22,10 +22,20 @@
             grid-template-columns: repeat(9, 50px);
             grid-template-rows: repeat(9, 50px);
             gap: 0;
-            background-color: #333;
-            padding: 2px;
-            border: 3px solid #333;
+            background-color: #000;
+            padding: 2px;  /* 增加内边距 */
+            border: 2px solid #000;
             width: fit-content;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            grid-template-rows: repeat(9, 40px);
+            gap: 1px;
+            background-color: #ccc;
+            padding: 1px;
+            border: 2px solid #333;
         }
 
         .cell {
@@ -37,33 +47,42 @@
             align-items: center;
             font-size: 20px;
             cursor: pointer;
-            border: 1px solid #ccc;
+            border: 1px solid #ddd;
             position: relative;
+            box-sizing: border-box;  /* 确保边框不会影响大小 */
         }
 
+        /* 修改3x3大格子的边界样式 */
         .cell:nth-child(3n) {
-            border-right: 3px solid #333;
+            border-right: 2px solid #000;  /* 更粗的边框 */
+            margin-right: -3px;  /* 补偿边框宽度 */
         }
 
         .cell:nth-child(n+19):nth-child(-n+27),
         .cell:nth-child(n+46):nth-child(-n+54) {
-            border-bottom: 3px solid #333;
+            border-bottom: 2px solid #000;  /* 更粗的边框 */
+            margin-bottom: -3px;  /* 补偿边框宽度 */
         }
 
+        /* 修改最右侧边框 */
         .cell:nth-child(9n) {
             border-right: none;
+            margin-right: 0;
         }
 
+        /* 修改最底部边框 */
         .cell:nth-child(n+73):nth-child(-n+81) {
             border-bottom: none;
+            margin-bottom: 0;
         }
 
+        /* 修改左侧和顶部边框 */
         .cell:nth-child(9n+1) {
-            border-left: 1px solid #ccc;
+            border-left: 1px solid #ddd;
         }
 
         .cell:nth-child(-n+9) {
-            border-top: 1px solid #ccc;
+            border-top: 1px solid #ddd;
         }
 
         .fixed {
