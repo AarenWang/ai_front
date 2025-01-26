@@ -1414,6 +1414,123 @@
 
         // 立即调用初始化
         initializeGame();
+
+        function showHint() {
+            const hintPanel = document.getElementById('hintPanel');
+            let hints = [];
+
+            // 1. 检查初始条件是否已满足
+            if (houses[0].nationality === null) {
+                hints.push("提示：第一间房子必须住挪威人");
+            }
+            if (houses[1].color === null) {
+                hints.push("提示：第二间房子必须是蓝色的");
+            }
+            if (houses[2].drink === null) {
+                hints.push("提示：中间房子必须喝牛奶");
+            }
+
+            // 2. 检查每个房子的未填属性
+            houses.forEach((house, index) => {
+                const houseNumber = index + 1;
+                
+                // 根据已知属性提供相关提示
+                if (house.color === '绿色' && house.drink === null) {
+                    hints.push(`提示：第${houseNumber}间绿色房子的主人必须喝咖啡`);
+                }
+                if (house.nationality === '英国人' && house.color === null) {
+                    hints.push(`提示：第${houseNumber}间英国人的房子必须是红色的`);
+                }
+                if (house.smoke === 'Pall Mall' && house.pet === null) {
+                    hints.push(`提示：第${houseNumber}间抽Pall Mall香烟的人必须养鸟`);
+                }
+                if (house.color === '黄色' && house.smoke === null) {
+                    hints.push(`提示：第${houseNumber}间黄色房子的主人必须抽Dunhill香烟`);
+                }
+                if (house.nationality === '德国人' && house.smoke === null) {
+                    hints.push(`提示：第${houseNumber}间德国人必须抽Prince香烟`);
+                }
+                if (house.smoke === 'Blue Master' && house.drink === null) {
+                    hints.push(`提示：第${houseNumber}间抽Blue Master烟的人必须喝啤酒`);
+                }
+            });
+
+            // 3. 检查相邻关系
+            for (let i = 0; i < houses.length - 1; i++) {
+                const current = houses[i];
+                const next = houses[i + 1];
+
+                // 检查绿色和白色房子的关系
+                if (current.color === '绿色' && next.color === null) {
+                    hints.push(`提示：第${i + 2}间房子应该是白色的（绿色房子必须在白色房子左边）`);
+                }
+                
+                // 检查Blend烟和猫的关系
+                if (current.smoke === 'Blend' && !hasValidNeighborPet(i, '猫')) {
+                    hints.push(`提示：抽Blend烟的人旁边必须有人养猫`);
+                }
+                
+                // 检查Dunhill烟和马的关系
+                if (current.smoke === 'Dunhill' && !hasValidNeighborPet(i, '马')) {
+                    hints.push(`提示：抽Dunhill烟的人旁边必须有人养马`);
+                }
+                
+                // 检查Blend烟和水的关系
+                if (current.smoke === 'Blend' && !hasValidNeighborDrink(i, '水')) {
+                    hints.push(`提示：抽Blend烟的人旁边必须有人喝水`);
+                }
+            }
+
+            // 4. 如果没有具体提示，给出通用提示
+            if (hints.length === 0) {
+                const emptyProperties = getEmptyProperties();
+                if (emptyProperties.length > 0) {
+                    hints.push(`建议关注第${emptyProperties[0].house + 1}间房子的${labels[emptyProperties[0].prop]}属性`);
+                }
+            }
+
+            // 显示提示
+            if (hints.length > 0) {
+                hintPanel.innerHTML = hints.join('<br>');
+                hintPanel.classList.add('show');
+                
+                // 3秒后自动隐藏提示
+                setTimeout(() => {
+                    hintPanel.classList.remove('show');
+                }, 5000);
+            }
+        }
+
+        // 辅助函数：检查是否有合适的邻居宠物
+        function hasValidNeighborPet(houseIndex, petType) {
+            const neighbors = [];
+            if (houseIndex > 0) neighbors.push(houses[houseIndex - 1]);
+            if (houseIndex < houses.length - 1) neighbors.push(houses[houseIndex + 1]);
+            
+            return neighbors.some(h => h.pet === petType || h.pet === null);
+        }
+
+        // 辅助函数：检查是否有合适的邻居饮品
+        function hasValidNeighborDrink(houseIndex, drinkType) {
+            const neighbors = [];
+            if (houseIndex > 0) neighbors.push(houses[houseIndex - 1]);
+            if (houseIndex < houses.length - 1) neighbors.push(houses[houseIndex + 1]);
+            
+            return neighbors.some(h => h.drink === drinkType || h.drink === null);
+        }
+
+        // 辅助函数：获取空属性
+        function getEmptyProperties() {
+            const emptyProps = [];
+            houses.forEach((house, index) => {
+                Object.keys(house).forEach(prop => {
+                    if (prop !== 'position' && house[prop] === null) {
+                        emptyProps.push({ house: index, prop: prop });
+                    }
+                });
+            });
+            return emptyProps;
+        }
     </script>
 </body>
 </html>
