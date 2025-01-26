@@ -20,11 +20,11 @@
         }
 
         .game-board {
-            width: 450px;
-            height: 450px;
+            width: 400px;
+            height: 400px;
             display: grid;
-            grid-template-columns: repeat(9, 50px);
-            grid-template-rows: repeat(9, 50px);
+            grid-template-columns: repeat(8, 50px);
+            grid-template-rows: repeat(8, 50px);
             gap: 1px;
             background-color: #ccc;
             padding: 10px;
@@ -40,20 +40,23 @@
 
         .pieces-container {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            flex-wrap: wrap;
             gap: 15px;
             padding: 15px;
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 340px;
+            justify-content: space-between;
         }
 
         .piece {
-            width: 150px;
-            height: 150px;
+            position: relative;
+            width: 160px;
             display: grid;
-            grid-template-columns: repeat(5, 30px);
-            grid-template-rows: repeat(5, 30px);
+            grid-template-columns: repeat(4, 20px);
+            grid-template-rows: repeat(4, 20px);
             gap: 1px;
             background-color: #f5f5f5;
             padding: 5px;
@@ -61,15 +64,16 @@
             cursor: move;
             transition: transform 0.2s ease;
             user-select: none;
+            margin-bottom: 10px;
         }
 
         .piece:hover {
-            transform: scale(1.02);
+            transform: none;
         }
 
         .piece-cell {
-            width: 30px;
-            height: 30px;
+            width: 20px;
+            height: 20px;
             background-color: white;
             border: 1px solid #eee;
         }
@@ -138,24 +142,87 @@
             box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.2);
         }
 
-        /* 添加拖拽时的预览样式 */
+        /* 修改拖拽预览样式 */
         .drag-preview {
             position: fixed;
             pointer-events: none;
             z-index: 1000;
-            opacity: 0.8;
+            opacity: 0.6;
             display: grid;
-            grid-template-columns: repeat(5, 20px);
-            grid-template-rows: repeat(5, 20px);
+            grid-template-columns: repeat(4, 20px);
+            grid-template-rows: repeat(4, 20px);
             gap: 1px;
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: transparent;
             padding: 5px;
             border-radius: 3px;
+        }
+
+        .drag-preview .piece-cell {
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border: 1px solid #eee;
+        }
+
+        .drag-preview .piece-cell.active {
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 添加拖拽时的样式 */
+        .dragging {
+            opacity: 0.5;
         }
 
         /* 添加无效放置位置的样式 */
         .cell.invalid-drop {
             background-color: rgba(255, 0, 0, 0.2);
+        }
+
+        /* 添加方块剩余数量的显示样式 */
+        .piece-count {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #ff4444;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .piece.used {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .game-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .game-controls button {
+            padding: 8px 15px;
+            font-size: 14px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .game-controls button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -173,39 +240,112 @@
         </div>
     </div>
 
+    <div class="game-controls">
+        <button id="undoBtn" onclick="undo()" disabled>撤销</button>
+    </div>
+
     <script>
         // 定义方块形状和颜色
         const PIECES = [
-            {
-                shape: [[1,1,1,1]], // I形
+            { // 1. 5格十字形
+                shape: [[0,1,0],
+                        [1,1,1],
+                        [0,1,0]],
                 color: '#FF0000'
             },
-            {
+            { // 2. 5格L形
                 shape: [[1,0],
                         [1,0],
-                        [1,1]], // L形
+                        [1,1,1]],
                 color: '#00FF00'
             },
-            {
-                shape: [[1,1],
-                        [1,1]], // 方形
+            { // 3. 5格反L形
+                shape: [[0,0,1],
+                        [0,0,1],
+                        [1,1,1]],
                 color: '#0000FF'
             },
-            {
+            { // 4. 5格T形
                 shape: [[1,1,1],
-                        [0,1,0]], // T形
+                        [0,1,0],
+                        [0,1,0]],
                 color: '#FFFF00'
+            },
+            { // 5. 4格Z形
+                shape: [[1,1,0],
+                        [0,1,1]],
+                color: '#FF00FF'
+            },
+            { // 6. 4格反Z形
+                shape: [[0,1,1],
+                        [1,1,0]],
+                color: '#00FFFF'
+            },
+            { // 7. 4格小L形
+                shape: [[1,0],
+                        [1,1]],
+                color: '#FFA500'
+            },
+            { // 8. 4格小反L形
+                shape: [[0,1],
+                        [1,1]],
+                color: '#800080'
+            },
+            { // 9. 4格方形
+                shape: [[1,1],
+                        [1,1]],
+                color: '#008080'
+            },
+            { // 10. 5格S形
+                shape: [[0,1,1],
+                        [1,1,0],
+                        [1,0,0]],
+                color: '#A52A2A'
+            },
+            { // 11. 5格反S形
+                shape: [[1,1,0],
+                        [0,1,1],
+                        [0,0,1]],
+                color: '#808000'
+            },
+            { // 12. 5格长L形
+                shape: [[1,1,1,1],
+                        [1,0,0,0]],
+                color: '#4B0082'
+            },
+            { // 13. 5格长反L形
+                shape: [[1,1,1,1],
+                        [0,0,0,1]],
+                color: '#006400'
             }
         ];
 
         let selectedPiece = null;
-        let board = Array(9).fill().map(() => Array(9).fill(null));
+        let board = Array(8).fill().map(() => Array(8).fill(null));
+        let piecesUsed = new Set(); // 用于记录已使用的方块索引
+        let history = [];
+        let currentStep = -1;
+
+        // 添加操作记录的函数
+        function addToHistory(action) {
+            // 清除当前步骤之后的历史
+            history = history.slice(0, currentStep + 1);
+            history.push(action);
+            currentStep++;
+            updateUndoButton();
+        }
+
+        // 更新撤销按钮状态
+        function updateUndoButton() {
+            const undoBtn = document.getElementById('undoBtn');
+            undoBtn.disabled = currentStep < 0;
+        }
 
         // 初始化游戏板
         function createGameBoard() {
             const board = document.getElementById('gameBoard');
-            for (let i = 0; i < 9; i++) {
-                for (let j = 0; j < 9; j++) {
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.dataset.row = i;
@@ -233,19 +373,30 @@
                 piece.draggable = true;
                 piece.dataset.pieceIndex = index;
 
+                // 计算实际需要的网格大小
+                const actualRows = pieceData.shape.length;
+                const actualCols = pieceData.shape[0].length;
+                piece.style.gridTemplateColumns = `repeat(${actualCols}, 20px)`;
+                piece.style.gridTemplateRows = `repeat(${actualRows}, 20px)`;
+                piece.style.width = `${actualCols * 20 + 10}px`;
+                piece.style.height = `${actualRows * 20 + 10}px`;
+
+                // 添加剩余数量显示
+                const countBadge = document.createElement('div');
+                countBadge.className = 'piece-count';
+                countBadge.textContent = '1';
+                piece.appendChild(countBadge);
+
                 // 添加拖拽事件监听器
                 piece.addEventListener('dragstart', handleDragStart);
                 piece.addEventListener('dragend', handleDragEnd);
-                piece.addEventListener('click', () => rotatePiece(piece));
 
-                // 创建5x5网格
-                for (let i = 0; i < 5; i++) {
-                    for (let j = 0; j < 5; j++) {
+                // 创建网格，只创建实际需要的格子
+                for (let i = 0; i < actualRows; i++) {
+                    for (let j = 0; j < actualCols; j++) {
                         const cell = document.createElement('div');
                         cell.className = 'piece-cell';
-                        if (i < pieceData.shape.length && 
-                            j < pieceData.shape[0].length && 
-                            pieceData.shape[i][j]) {
+                        if (pieceData.shape[i][j]) {
                             cell.classList.add('active');
                             cell.style.backgroundColor = pieceData.color;
                         }
@@ -263,7 +414,7 @@
             document.getElementById('piecesContainer').innerHTML = '';
             
             // 重置游戏状态
-            board = Array(9).fill().map(() => Array(9).fill(null));
+            board = Array(8).fill().map(() => Array(8).fill(null));
             selectedPiece = null;
             
             createGameBoard();
@@ -271,14 +422,40 @@
         }
 
         function handleDragStart(e) {
+            const pieceIndex = parseInt(e.target.dataset.pieceIndex);
+            if (piecesUsed.has(pieceIndex)) {
+                e.preventDefault();
+                return;
+            }
             selectedPiece = e.target;
-            selectedPiece.classList.add('selected-piece');
+            selectedPiece.classList.add('dragging');
             
             // 创建拖拽预览元素
             const preview = document.createElement('div');
             preview.className = 'drag-preview';
-            preview.innerHTML = selectedPiece.innerHTML;
+            // 复制原始方块的样式和结构
+            if (pieceIndex !== undefined) {
+                const pieceData = PIECES[pieceIndex];
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'piece-cell';
+                        if (i < pieceData.shape.length && 
+                            j < pieceData.shape[0].length && 
+                            pieceData.shape[i][j]) {
+                            cell.classList.add('active');
+                            cell.style.backgroundColor = pieceData.color;
+                        }
+                        preview.appendChild(cell);
+                    }
+                }
+            }
             document.body.appendChild(preview);
+            
+            // 设置拖拽图像为透明
+            const transparent = new Image();
+            transparent.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            e.dataTransfer.setDragImage(transparent, 0, 0);
             
             // 记录鼠标在方块内的相对位置
             const rect = selectedPiece.getBoundingClientRect();
@@ -287,7 +464,8 @@
         }
 
         function handleDragEnd(e) {
-            selectedPiece.classList.remove('selected-piece');
+            e.preventDefault();
+            selectedPiece.classList.remove('dragging');
             // 移除预览元素
             const preview = document.querySelector('.drag-preview');
             if (preview) {
@@ -297,6 +475,21 @@
             document.querySelectorAll('.cell.invalid-drop').forEach(cell => {
                 cell.classList.remove('invalid-drop');
             });
+            // 清除所有拖拽相关的样式
+            document.querySelectorAll('.piece').forEach(piece => {
+                piece.style.opacity = '1';
+            });
+            
+            // 如果拖拽结束时没有成功放置，恢复到原位置
+            if (selectedPiece && selectedPiece.pieceData && selectedPiece.startRow !== undefined) {
+                placePiece(
+                    selectedPiece.startRow,
+                    selectedPiece.startCol,
+                    selectedPiece.shape,
+                    selectedPiece.pieceData.color,
+                    selectedPiece.pieceData
+                );
+            }
             selectedPiece = null;
         }
 
@@ -308,50 +501,46 @@
                 // 更新预览元素位置
                 preview.style.left = (e.clientX - selectedPiece.offsetX) + 'px';
                 preview.style.top = (e.clientY - selectedPiece.offsetY) + 'px';
-                
-                // 获取当前悬停的格子
-                const cell = e.target.closest('.cell');
-                if (cell) {
-                    const row = parseInt(cell.dataset.row);
-                    const col = parseInt(cell.dataset.col);
-                    const shape = selectedPiece.pieceData ? selectedPiece.shape : 
-                                 PIECES[parseInt(selectedPiece.dataset.pieceIndex)].shape;
-                    
-                    // 检查是否可以放置
-                    const isValid = canPlacePiece(row, col, shape);
-                    
-                    // 显示放置预览
-                    showPlacementPreview(row, col, shape, isValid);
-                }
             }
         });
 
-        function showPlacementPreview(startRow, startCol, shape, isValid) {
-            // 清除之前的预览
-            document.querySelectorAll('.cell.invalid-drop').forEach(cell => {
-                cell.classList.remove('invalid-drop');
-            });
-            
-            // 显示新的预览
-            for (let i = 0; i < shape.length; i++) {
-                for (let j = 0; j < shape[0].length; j++) {
-                    if (shape[i][j]) {
-                        const newRow = startRow + i;
-                        const newCol = startCol + j;
-                        if (newRow < 9 && newCol < 9) {
-                            const cell = document.querySelector(
-                                `.cell[data-row="${newRow}"][data-col="${newCol}"]`
-                            );
-                            if (cell && !isValid) {
-                                cell.classList.add('invalid-drop');
-                            }
-                        }
-                    }
+        // 添加全局拖拽事件监听
+        document.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+        });
+
+        // 允许在整个文档范围内放置
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (!selectedPiece) return;
+
+            const cell = e.target.closest('.cell');
+            if (!cell) {
+                // 如果在游戏板外放置，恢复到原位置
+                if (selectedPiece.pieceData && selectedPiece.startRow !== undefined) {
+                    placePiece(
+                        selectedPiece.startRow,
+                        selectedPiece.startCol,
+                        selectedPiece.shape,
+                        selectedPiece.pieceData.color,
+                        selectedPiece.pieceData
+                    );
                 }
+                cleanupDragEffects();
+                selectedPiece = null;
             }
-        }
+        });
 
         function handleBoardDragStart(e) {
+            if (!e.target.classList.contains('filled')) {
+                e.preventDefault();
+                return;
+            }
+
             const row = parseInt(e.target.dataset.row);
             const col = parseInt(e.target.dataset.col);
             
@@ -369,6 +558,26 @@
                 startCol--;
             }
 
+            // 立即清除原位置的所有格子的颜色和状态
+            for (let i = 0; i < piece.shape.length; i++) {
+                for (let j = 0; j < piece.shape[0].length; j++) {
+                    if (piece.shape[i][j]) {
+                        const currentRow = startRow + i;
+                        const currentCol = startCol + j;
+                        if (currentRow < 8 && currentCol < 8) {
+                            const cell = document.querySelector(
+                                `.cell[data-row="${currentRow}"][data-col="${currentCol}"]`
+                            );
+                            if (cell) {
+                                cell.classList.remove('filled');
+                                cell.style.backgroundColor = '';
+                                board[currentRow][currentCol] = null;
+                            }
+                        }
+                    }
+                }
+            }
+
             selectedPiece = {
                 element: e.target,
                 pieceData: piece,
@@ -377,13 +586,15 @@
                 shape: piece.shape
             };
 
+            e.target.classList.add('dragging');
+            
             // 创建拖拽预览
             const preview = document.createElement('div');
             preview.className = 'drag-preview';
             const shape = piece.shape;
             
-            for (let i = 0; i < 5; i++) {
-                for (let j = 0; j < 5; j++) {
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
                     const cell = document.createElement('div');
                     cell.className = 'piece-cell';
                     if (i < shape.length && j < shape[0].length && shape[i][j]) {
@@ -396,18 +607,52 @@
             
             document.body.appendChild(preview);
             
+            // 设置拖拽图像为透明
+            const transparent = new Image();
+            transparent.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            e.dataTransfer.setDragImage(transparent, 0, 0);
+            
             // 记录鼠标在方块内的相对位置
             const rect = e.target.getBoundingClientRect();
             selectedPiece.offsetX = e.clientX - rect.left;
             selectedPiece.offsetY = e.clientY - rect.top;
         }
 
+        // 清理函数
+        function cleanupDragEffects() {
+            // 移除所有拖拽相关的类和样式
+            document.querySelectorAll('.dragging').forEach(el => {
+                el.classList.remove('dragging');
+            });
+            document.querySelectorAll('.drag-preview').forEach(el => {
+                el.remove();
+            });
+            document.querySelectorAll('.invalid-drop').forEach(el => {
+                el.classList.remove('invalid-drop');
+            });
+        }
+
         function handleDrop(e) {
             e.preventDefault();
             if (!selectedPiece) return;
 
+            cleanupDragEffects();
+
             const cell = e.target.closest('.cell');
-            if (!cell) return;
+            if (!cell) {
+                // 如果是已放置的方块，且拖放失败，恢复到原位置
+                if (selectedPiece.pieceData && selectedPiece.startRow !== undefined) {
+                    placePiece(
+                        selectedPiece.startRow,
+                        selectedPiece.startCol,
+                        selectedPiece.shape,
+                        selectedPiece.pieceData.color,
+                        selectedPiece.pieceData
+                    );
+                }
+                selectedPiece = null;
+                return;
+            }
 
             const row = parseInt(cell.dataset.row);
             const col = parseInt(cell.dataset.col);
@@ -419,21 +664,33 @@
                 pieceData = selectedPiece.pieceData;
                 shape = selectedPiece.shape;
                 color = pieceData.color;
-                // 如果是移动已放置的方块，先清除原位置
-                clearPieceFromBoard(selectedPiece.startRow, selectedPiece.startCol, shape);
             } else {
                 const pieceIndex = parseInt(selectedPiece.dataset.pieceIndex);
                 pieceData = PIECES[pieceIndex];
                 shape = pieceData.shape;
                 color = pieceData.color;
+                // 标记方块已使用
+                if (canPlacePiece(row, col, shape)) {
+                    piecesUsed.add(pieceIndex);
+                    selectedPiece.classList.add('used');
+                }
             }
 
             if (canPlacePiece(row, col, shape)) {
                 placePiece(row, col, shape, color, pieceData);
                 if (!selectedPiece.pieceData) {
-                    selectedPiece.remove();
+                    selectedPiece.querySelector('.piece-count').textContent = '0';
                 }
                 checkVictory();
+            } else if (selectedPiece.pieceData) {
+                // 如果放置失败，恢复到原位置
+                placePiece(
+                    selectedPiece.startRow,
+                    selectedPiece.startCol,
+                    selectedPiece.shape,
+                    selectedPiece.pieceData.color,
+                    selectedPiece.pieceData
+                );
             }
             selectedPiece = null;
         }
@@ -444,7 +701,7 @@
                     if (pieceShape[i][j]) {
                         const newRow = startRow + i;
                         const newCol = startCol + j;
-                        if (newRow >= 9 || newCol >= 9 || board[newRow][newCol]) {
+                        if (newRow >= 8 || newCol >= 8 || board[newRow][newCol]) {
                             return false;
                         }
                     }
@@ -454,6 +711,19 @@
         }
 
         function placePiece(startRow, startCol, pieceShape, color, pieceData) {
+            // 记录操作
+            const action = {
+                type: 'place',
+                row: startRow,
+                col: startCol,
+                shape: pieceShape,
+                color: color,
+                pieceData: pieceData,
+                isMove: !!selectedPiece.pieceData, // 是否是移动已放置的方块
+                pieceIndex: selectedPiece.pieceData ? null : parseInt(selectedPiece.dataset.pieceIndex)
+            };
+            addToHistory(action);
+
             for (let i = 0; i < pieceShape.length; i++) {
                 for (let j = 0; j < pieceShape[0].length; j++) {
                     if (pieceShape[i][j]) {
@@ -474,15 +744,20 @@
             
             // 更新显示
             const cells = piece.querySelectorAll('.piece-cell');
-            cells.forEach(cell => cell.classList.remove('active'));
+            cells.forEach(cell => {
+                cell.classList.remove('active');
+                cell.style.backgroundColor = ''; // 清除所有单元格的颜色
+            });
             
             const shape = PIECES[pieceIndex].shape;
             const color = PIECES[pieceIndex].color;
             for (let i = 0; i < shape.length; i++) {
                 for (let j = 0; j < shape[0].length; j++) {
                     if (shape[i][j]) {
-                        cells[i * 5 + j].classList.add('active');
-                        cells[i * 5 + j].style.backgroundColor = color;
+                        cells[i * 4 + j].classList.add('active');
+                        cells[i * 4 + j].style.backgroundColor = color;
+                    } else {
+                        cells[i * 4 + j].style.backgroundColor = 'white'; // 确保非活动格子为白色
                     }
                 }
             }
@@ -504,8 +779,8 @@
 
         function checkVictory() {
             let isFull = true;
-            for (let i = 0; i < 9; i++) {
-                for (let j = 0; j < 9; j++) {
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
                     if (board[i][j] === null) {
                         isFull = false;
                         break;
@@ -520,9 +795,13 @@
         }
 
         function startNewGame() {
-            board = Array(9).fill().map(() => Array(9).fill(null));
+            board = Array(8).fill().map(() => Array(8).fill(null));
+            piecesUsed.clear();
+            history = [];
+            currentStep = -1;
             document.getElementById('victoryModal').style.display = 'none';
             initGame();
+            updateUndoButton();
         }
 
         function rotatePlacedPiece(row, col) {
@@ -539,15 +818,41 @@
             }
             
             const oldShape = piece.shape;
-            
             const newShape = rotatePieceShape(oldShape);
             
+            // 临时清除当前方块，但保存状态
+            const tempBoard = board.map(row => [...row]);
             clearPieceFromBoard(startRow, startCol, oldShape);
+            
             if (canPlacePiece(startRow, startCol, newShape)) {
                 piece.shape = newShape;
                 placePiece(startRow, startCol, newShape, piece.color, piece);
+                // 添加到历史记录
+                addToHistory({
+                    type: 'rotate',
+                    row: startRow,
+                    col: startCol,
+                    oldShape: oldShape,
+                    newShape: newShape,
+                    color: piece.color,
+                    pieceData: piece
+                });
             } else {
-                placePiece(startRow, startCol, oldShape, piece.color, piece);
+                // 如果不能旋转，恢复原状
+                piece.shape = oldShape;
+                board = tempBoard.map(row => [...row]);
+                for (let i = 0; i < 8; i++) {
+                    for (let j = 0; j < 8; j++) {
+                        const cell = document.querySelector(`.cell[data-row="${i}"][data-col="${j}"]`);
+                        if (board[i][j]) {
+                            cell.classList.add('filled');
+                            cell.style.backgroundColor = board[i][j].color;
+                        } else {
+                            cell.classList.remove('filled');
+                            cell.style.backgroundColor = '';
+                        }
+                    }
+                }
             }
         }
 
@@ -557,7 +862,7 @@
                     if (shape[i][j]) {
                         const row = startRow + i;
                         const col = startCol + j;
-                        if (row < 9 && col < 9) {
+                        if (row < 8 && col < 8) {
                             board[row][col] = null;
                             const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
                             cell.classList.remove('filled');
@@ -570,6 +875,36 @@
 
         function handleDragOver(e) {
             e.preventDefault(); // 允许放置
+        }
+
+        // 修改 undo 函数以支持旋转操作的撤销
+        function undo() {
+            if (currentStep < 0) return;
+            
+            const lastAction = history[currentStep];
+            
+            if (lastAction.type === 'place') {
+                // 移除放置的方块
+                clearPieceFromBoard(lastAction.row, lastAction.col, lastAction.shape);
+                
+                if (!lastAction.isMove) {
+                    // 如果是新放置的方块，恢复方块到右侧面板
+                    const piece = document.querySelector(`.piece[data-piece-index="${lastAction.pieceIndex}"]`);
+                    if (piece) {
+                        piece.classList.remove('used');
+                        piece.querySelector('.piece-count').textContent = '1';
+                        piecesUsed.delete(lastAction.pieceIndex);
+                    }
+                }
+            } else if (lastAction.type === 'rotate') {
+                // 恢复旋转前的状态
+                clearPieceFromBoard(lastAction.row, lastAction.col, lastAction.newShape);
+                lastAction.pieceData.shape = lastAction.oldShape;
+                placePiece(lastAction.row, lastAction.col, lastAction.oldShape, lastAction.color, lastAction.pieceData);
+            }
+            
+            currentStep--;
+            updateUndoButton();
         }
 
         // 启动游戏
