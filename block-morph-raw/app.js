@@ -103,7 +103,57 @@ function createBlock(shape, layer) {
   return group;
 }
 
-// 检查碰撞
+// 拖拽交互实现
+function makeDraggable(block) {
+  let isDragging = false;
+  let blockClone = null;
+
+  block.on('dragstart', () => {
+    isDragging = true;
+    
+    // 创建一个克隆方块到主棋盘
+    const shape = block.attrs.shape;
+    blockClone = createBlock(shape, blockLayer);
+    blockClone.position(stage.getPointerPosition());
+    blockLayer.draw();
+  });
+
+  block.on('dragmove', () => {
+    if (blockClone) {
+      // 将方块移动到鼠标位置
+      const pos = stage.getPointerPosition();
+      blockClone.position({
+        x: Math.round(pos.x / config.gridSize) * config.gridSize,
+        y: Math.round(pos.y / config.gridSize) * config.gridSize
+      });
+      blockLayer.draw();
+    }
+  });
+
+  block.on('dragend', () => {
+    isDragging = false;
+    if (blockClone) {
+      const pos = blockClone.position();
+      if (!checkCollision(pos, block.attrs.shape)) {
+        mergeToBoard(blockClone);
+        block.destroy(); // 移除原始方块
+      } else {
+        blockClone.destroy(); // 如果不能放置，移除克隆的方块
+      }
+      blockLayer.draw();
+      block.getLayer().draw();
+    }
+  });
+}
+
+// 生成方块函数
+function generateBlocks() {
+  const validShapes = predefinedShapes.filter(shape => validateShape(shape));
+  // 随机打乱数组顺序
+  return validShapes.sort(() => Math.random() - 0.5);
+}
+
+// 检查碰撞函数更新
 function checkCollision(pos, shape) {
   const gridX = Math.round(pos.x / config.gridSize);
   const gridY = Math.round(pos.y / config.gridSize);
@@ -145,10 +195,86 @@ function mergeToBoard(block) {
     x: gridX * config.gridSize,
     y: gridY * config.gridSize
   });
-  block.draggable(false);
+  
+  // 保持方块可拖动，但需要添加新的拖动处理
+  block.draggable(true);
+  
+  // 为棋盘上的方块添加拖动事件
+  addBoardBlockDraggable(block);
   
   // 检查是否需要消除
   checkCompletion();
+}
+
+// 为棋盘上的方块添加拖动事件
+function addBoardBlockDraggable(block) {
+  const shape = block.attrs.shape;
+  
+  block.on('dragstart', () => {
+    // 从游戏状态中移除当前方块
+    const pos = block.getAbsolutePosition();
+    const gridX = Math.round(pos.x / config.gridSize);
+    const gridY = Math.round(pos.y / config.gridSize);
+    
+    shape.points.forEach(([x, y]) => {
+      const boardX = gridX + x;
+      const boardY = gridY + y;
+      gameState.board[boardY][boardX] = 0;
+    });
+  });
+
+  block.on('dragmove', () => {
+    const pos = block.getAbsolutePosition();
+    block.position({
+      x: Math.round(pos.x / config.gridSize) * config.gridSize,
+      y: Math.round(pos.y / config.gridSize) * config.gridSize
+    });
+    blockLayer.draw();
+  });
+
+  block.on('dragend', () => {
+    const pos = block.getAbsolutePosition();
+    if (!checkCollision(pos, shape)) {
+      // 在新位置放置方块
+      const gridX = Math.round(pos.x / config.gridSize);
+      const gridY = Math.round(pos.y / config.gridSize);
+      
+      shape.points.forEach(([x, y]) => {
+        const boardX = gridX + x;
+        const boardY = gridY + y;
+        gameState.board[boardY][boardX] = shape.id;
+      });
+      
+      block.position({
+        x: gridX * config.gridSize,
+        y: gridY * config.gridSize
+      });
+    } else {
+      // 如果新位置无效，返回原始位置
+      const oldPos = block.getAttr('lastValidPosition');
+      block.position(oldPos);
+      
+      // 恢复游戏状态
+      const gridX = Math.round(oldPos.x / config.gridSize);
+      const gridY = Math.round(oldPos.y / config.gridSize);
+      
+      shape.points.forEach(([x, y]) => {
+        const boardX = gridX + x;
+        const boardY = gridY + y;
+        gameState.board[boardY][boardX] = shape.id;
+      });
+    }
+    
+    // 保存当前有效位置
+    block.setAttr('lastValidPosition', block.position());
+    blockLayer.draw();
+    
+    // 检查是否需要消除
+    checkCompletion();
+  });
+  
+  // 保存初始有效位置
+  block.setAttr('lastValidPosition', block.position());
 }
 
 // 检查是否完成行或列
@@ -181,28 +307,6 @@ function setupTouchEvents(block) {
   const hammer = new Hammer(block.getStage().container());
   hammer.on('pan', handlePan);
   hammer.on('panend', handlePanEnd);
-}
-
-// 方块生成逻辑
-function generateBlocks() {
-  return predefinedShapes.filter(shape => {
-    return validateShape(shape); // 自定义验证逻辑
-  });
-}
-
-// 拖拽交互实现
-function makeDraggable(shapeNode) {
-  let isDragging = false;
-  shapeNode.on('dragstart', () => { isDragging = true });
-  shapeNode.on('dragend', () => {
-    isDragging = false;
-    const pos = shapeNode.getAbsolutePosition();
-    if (checkCollision(pos)) {
-      mergeToBoard(shapeNode); // 合并到棋盘
-    } else {
-      shapeNode.position({ x: 0, y: 0 }); // 复位
-    }
-  });
 }
 
 // 初始化游戏
