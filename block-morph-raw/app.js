@@ -59,7 +59,7 @@ function initBlocksPanel() {
   const blocksPanelLayer = new Konva.Layer();
   blockStage.add(blocksPanelLayer);
   
-  // 保存对右侧舞台的引用
+  // 保存对右侧舞台和图层的引用
   window.blocksPanelStage = blockStage;
   window.blocksPanelLayer = blocksPanelLayer;
   
@@ -99,7 +99,9 @@ function createBlock(shape, layer) {
     group.add(rect);
   });
 
-  layer.add(group);
+  if (layer) {
+    layer.add(group);
+  }
   return group;
 }
 
@@ -116,6 +118,9 @@ function makeDraggable(block) {
     blockClone = createBlock(shape, blockLayer);
     blockClone.position(stage.getPointerPosition());
     blockLayer.draw();
+
+    // 更新位置信息
+    updatePositionInfo(block.getAbsolutePosition(), shape);
   });
 
   block.on('dragmove', () => {
@@ -127,6 +132,9 @@ function makeDraggable(block) {
         y: Math.round(pos.y / config.gridSize) * config.gridSize
       });
       blockLayer.draw();
+
+      // 更新位置信息
+      updatePositionInfo(pos, block.attrs.shape);
     }
   });
 
@@ -152,6 +160,9 @@ function makeDraggable(block) {
       }
       blockLayer.draw();
       block.getLayer().draw();
+
+      // 清除位置信息
+      updatePositionInfo(null);
     }
   });
 }
@@ -232,9 +243,11 @@ function mergeToBoard(block) {
 function addBoardBlockDraggable(block) {
   const shape = block.attrs.shape;
   let startPos = null;
+  let isMovingToPanel = false;
   
   block.on('dragstart', () => {
     startPos = block.position();
+    isMovingToPanel = false;
     // 从游戏状态中临时移除当前方块
     const pos = block.getAbsolutePosition();
     const gridX = Math.round(pos.x / config.gridSize);
@@ -247,83 +260,136 @@ function addBoardBlockDraggable(block) {
         gameState.board[boardY][boardX] = 0;
       }
     });
+
+    // 更新位置信息
+    updatePositionInfo(pos, shape);
   });
 
-  block.on('dragmove', () => {
-    const pos = block.getAbsolutePosition();
-    // 如果在棋盘区域内，对齐到网格
-    if (pos.x < config.boardSize * config.gridSize && pos.y < config.boardSize * config.gridSize) {
-      block.position({
-        x: Math.round(pos.x / config.gridSize) * config.gridSize,
-        y: Math.round(pos.y / config.gridSize) * config.gridSize
-      });
-    }
-    blockLayer.draw();
-  });
+  block.on('dragmove', (e) => {
+    if (isMovingToPanel) return;
 
-  block.on('dragend', () => {
     const pos = block.getAbsolutePosition();
-    const boardRect = stage.container().getBoundingClientRect();
-    const panelRect = window.blocksPanelStage.container().getBoundingClientRect();
-    const mousePos = stage.getPointerPosition();
+    // 更新位置信息
+    updatePositionInfo(pos, shape);
     
-    // 检查鼠标是否在右侧面板区域
-    if (mousePos && 
-        mousePos.x > panelRect.left && mousePos.x < panelRect.right &&
-        mousePos.y > panelRect.top && mousePos.y < panelRect.bottom) {
-      // 如果拖到右侧区域，生成新的方块
-      const newShape = generateBlocks()[0];
-      if (newShape) {
-        const newBlock = createBlock(newShape, window.blocksPanelLayer);
-        const index = window.blocksPanelLayer.children.length;
+    const mousePos = stage.getPointerPosition();
+    const panelRect = document.getElementById('blocks-panel').getBoundingClientRect();
+    const stageRect = stage.container().getBoundingClientRect();
+    
+    // 计算图形所有点的位置
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    
+    shape.points.forEach(([x, y]) => {
+      const boardX = Math.round(pos.x / config.gridSize) + x;
+      const boardY = Math.round(pos.y / config.gridSize) + y;
+      minX = Math.min(minX, boardX);
+      maxX = Math.max(maxX, boardX);
+      minY = Math.min(minY, boardY);
+      maxY = Math.max(maxY, boardY);
+    });
+
+    // 检查鼠标是否在右侧面板区域内
+    const isMouseInPanel = mousePos && 
+      mousePos.x + stageRect.left > panelRect.left && 
+      mousePos.x + stageRect.left < panelRect.right &&
+      mousePos.y + stageRect.top > panelRect.top && 
+      mousePos.y + stageRect.top < panelRect.bottom;
+
+    // 只有当鼠标在右侧面板区域内时才切换
+    if (maxX >= config.boardSize && isMouseInPanel) {
+      isMovingToPanel = true;
+      // 移动到右侧面板
+      const newShape = predefinedShapes[Math.floor(Math.random() * predefinedShapes.length)];
+      if (newShape && window.blocksPanelLayer) {
+        const newBlock = createBlock(newShape, null);
+        const index = window.blocksPanelLayer.children ? window.blocksPanelLayer.children.length : 0;
         const column = index % 3;
         const row = Math.floor(index / 3);
+        
         newBlock.position({
           x: 20 + column * (config.gridSize * 3 + 20),
           y: 20 + row * (config.gridSize * 3 + 20)
         });
+        
+        window.blocksPanelLayer.add(newBlock);
         makeDraggable(newBlock);
-        window.blocksPanelLayer.draw();
+        window.blocksPanelLayer.batchDraw();
       }
-      // 删除原方块
+      
       block.destroy();
-      blockLayer.draw();
-    } else if (pos.x >= 0 && pos.x < config.boardSize * config.gridSize &&
-               pos.y >= 0 && pos.y < config.boardSize * config.gridSize) {
-      // 在棋盘范围内的处理
-      if (!checkCollision(pos, shape, block)) {
-        const gridX = Math.round(pos.x / config.gridSize);
-        const gridY = Math.round(pos.y / config.gridSize);
-        
-        shape.points.forEach(([x, y]) => {
-          const boardX = gridX + x;
-          const boardY = gridY + y;
-          gameState.board[boardY][boardX] = shape.id;
-        });
-        
-        block.position({
-          x: gridX * config.gridSize,
-          y: gridY * config.gridSize
-        });
-      } else {
-        // 如果新位置无效，返回起始位置
-        block.position(startPos);
-        
-        // 恢复游戏状态
-        const gridX = Math.round(startPos.x / config.gridSize);
-        const gridY = Math.round(startPos.y / config.gridSize);
-        
-        shape.points.forEach(([x, y]) => {
-          const boardX = gridX + x;
-          const boardY = gridY + y;
-          if (boardY >= 0 && boardY < config.boardSize && boardX >= 0 && boardX < config.boardSize) {
-            gameState.board[boardY][boardX] = shape.id;
-          }
-        });
+      blockLayer.batchDraw();
+      return;
+    }
+
+    // 限制在棋盘范围内移动
+    const newX = Math.round(pos.x / config.gridSize) * config.gridSize;
+    const newY = Math.round(pos.y / config.gridSize) * config.gridSize;
+    
+    // 计算新位置是否会导致任何部分超出边界
+    let isValidPosition = true;
+    shape.points.forEach(([x, y]) => {
+      const boardX = Math.round(newX / config.gridSize) + x;
+      const boardY = Math.round(newY / config.gridSize) + y;
+      if (boardX < 0 || boardY < 0 || boardY >= config.boardSize) {
+        isValidPosition = false;
       }
+    });
+
+    // 只在有效位置更新方块位置
+    if (isValidPosition) {
+      block.position({
+        x: newX,
+        y: newY
+      });
+    } else {
+      block.position(startPos);
     }
     
-    blockLayer.draw();
+    blockLayer.batchDraw();
+  });
+
+  block.on('dragend', (e) => {
+    if (isMovingToPanel) {
+      // 清除位置信息
+      updatePositionInfo(null);
+      return;
+    }
+
+    const pos = block.getAbsolutePosition();
+    // 在棋盘范围内的处理
+    if (!checkCollision(pos, shape, block)) {
+      const gridX = Math.round(pos.x / config.gridSize);
+      const gridY = Math.round(pos.y / config.gridSize);
+      
+      shape.points.forEach(([x, y]) => {
+        const boardX = gridX + x;
+        const boardY = gridY + y;
+        gameState.board[boardY][boardX] = shape.id;
+      });
+      
+      block.position({
+        x: gridX * config.gridSize,
+        y: gridY * config.gridSize
+      });
+    } else {
+      // 如果新位置无效，返回起始位置
+      block.position(startPos);
+      
+      // 恢复游戏状态
+      const gridX = Math.round(startPos.x / config.gridSize);
+      const gridY = Math.round(startPos.y / config.gridSize);
+      
+      shape.points.forEach(([x, y]) => {
+        const boardX = gridX + x;
+        const boardY = gridY + y;
+        if (boardY >= 0 && boardY < config.boardSize && boardX >= 0 && boardX < config.boardSize) {
+          gameState.board[boardY][boardX] = shape.id;
+        }
+      });
+    }
+    
+    blockLayer.batchDraw();
     
     // 检查是否胜利
     if (checkWin()) {
@@ -478,6 +544,36 @@ function checkWin() {
 function handleWin() {
   alert('恭喜你赢得了游戏！');
   // 这里可以添加重新开始游戏的逻辑
+}
+
+// 添加更新位置信息的函数
+function updatePositionInfo(pos, shape) {
+  const blockPosElement = document.getElementById('block-position');
+  const gridPosElement = document.getElementById('grid-position');
+  
+  if (pos) {
+    // 更新实际像素位置
+    blockPosElement.textContent = `x: ${Math.round(pos.x)}, y: ${Math.round(pos.y)}`;
+    
+    // 计算并更新网格位置
+    const gridX = Math.round(pos.x / config.gridSize);
+    const gridY = Math.round(pos.y / config.gridSize);
+    
+    // 如果有形状信息，显示形状所占用的所有格子
+    if (shape) {
+      const gridPositions = shape.points.map(([x, y]) => {
+        const boardX = gridX + x;
+        const boardY = gridY + y;
+        return `(${boardX},${boardY})`;
+      }).join(' ');
+      gridPosElement.textContent = gridPositions;
+    } else {
+      gridPosElement.textContent = `(${gridX},${gridY})`;
+    }
+  } else {
+    blockPosElement.textContent = '-';
+    gridPosElement.textContent = '-';
+  }
 }
 
 // 初始化游戏
